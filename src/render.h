@@ -1,0 +1,15 @@
+#include <stdint.h>
+#include "dungeon_mem.h"
+
+struct Camera{
+    int32_t old_x;
+    int32_t old_y;
+    int32_t cam_x;
+    int32_t cam_y;
+    int16_t cursor_x;
+    int16_t cursor_y;
+    int32_t view_width;
+    int32_t view_height;
+};
+
+int drawMobs(struct Dungeon*, uint32_t, uint32_t);
