@@ -41,13 +41,12 @@ bool
 bitmapGetPx(struct Bitmap *bmp, uint32_t x, uint32_t y, bool oob)
 {
     if(!bmp) return oob;
-    
+
+    if( x > bmp->width || y > bmp->height) return oob;
     uint32_t bit_index = y * bmp->width + x;
     uint32_t byte_index = bit_index / 8;
     uint32_t bit_offset = bit_index % 8;
    
-    if(byte_index >= bmp->width * bmp->width) return oob;
-
     return BITFIELD_EXTRACT(bmp->data[byte_index], bit_offset, 1);
 }
 
@@ -55,13 +54,12 @@ void
 bitmapPutPx(struct Bitmap *bmp, uint32_t x, uint32_t y, bool val)
 {
     if(!bmp) return;
-
+    if( x > bmp->width || y > bmp->height) return;
+    
     uint32_t bit_index = y * bmp->width + x;
     uint32_t byte_index = bit_index / 8;
     uint32_t bit_offset = bit_index % 8;
-     
-    if(byte_index >= bmp->width * bmp->width) return;
-    
+      
     bmp->data[byte_index] = BITFIELD_INSERT(bmp->data[byte_index], 
                                            val ? 1 : 0, bit_offset, 1);
 }
