@@ -23,9 +23,11 @@ int main(void) {
     struct AStar *aa;
 
     while(1){
+        path_len = 16;
         aStar(d, goblin->pos, player->pos, &aa);
         aStarBuildPath(aa, path, &path_len);
-        mobMove(d, goblin, path[path_len -1]);
+        if(path_len)
+            mobMove(d, goblin, path[path_len -1]);
 
         drawMobs(d, player->pos);
         termRefresh();
