@@ -38,11 +38,12 @@ bitmapCreate(uint32_t width, uint32_t height)
 }
 
 bool
-bitmapGetPx(struct Bitmap *bmp, uint32_t x, uint32_t y, bool oob)
+bitmapGetPx(struct Bitmap *bmp, int32_t x, int32_t y, bool oob)
 {
     if(!bmp) return oob;
+    if(x < 0 || x > (int32_t)bmp->width || 
+        y < 0 || y > (int32_t)bmp->height) return oob;
 
-    if( x > bmp->width || y > bmp->height) return oob;
     uint32_t bit_index = y * bmp->width + x;
     uint32_t byte_index = bit_index / 8;
     uint32_t bit_offset = bit_index % 8;
@@ -51,10 +52,11 @@ bitmapGetPx(struct Bitmap *bmp, uint32_t x, uint32_t y, bool oob)
 }
 
 void
-bitmapPutPx(struct Bitmap *bmp, uint32_t x, uint32_t y, bool val)
+bitmapPutPx(struct Bitmap *bmp, int32_t x, int32_t y, bool val)
 {
     if(!bmp) return;
-    if( x > bmp->width || y > bmp->height) return;
+    if(x < 0 || x > (int32_t)bmp->width || 
+        y < 0 || y > (int32_t)bmp->height) return;
     
     uint32_t bit_index = y * bmp->width + x;
     uint32_t byte_index = bit_index / 8;

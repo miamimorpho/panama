@@ -14,8 +14,8 @@
 typedef struct Bitmap Bitmap;
 
 struct Bitmap *bitmapCreate(uint32_t, uint32_t);
-bool bitmapGetPx(struct Bitmap *, uint32_t, uint32_t, bool);
-void bitmapPutPx(struct Bitmap *, uint32_t, uint32_t, bool);
+bool bitmapGetPx(struct Bitmap *, int32_t, int32_t, bool);
+void bitmapPutPx(struct Bitmap *, int32_t, int32_t, bool);
 void bitmapFill(struct Bitmap *, bool val);
 
 #endif // BITMAP_H

@@ -7,30 +7,30 @@
 #define CHUNK_LENGTH 16
 #define TERRA_POS_NULL (struct TerraPos){0}
 
-#define SPATIAL_HASH_COUNT 128
+#define SPATIAL_HASH_C 128
 #define CHUNK_COUNT 64
 #define MOBILE_COUNT 128
 
 struct DungeonChunk{
-    struct{
-        PLIST_ENTRY();
-        POSITION_FIELD;
-    }pos;
+
+    PLIST_ENTRY() link;
+    vec16 pos;
+
     /* Terrain */
     Bitmap *solid;
     Bitmap *opaque;
     utf32_t *tiles;
 
-    struct MobList mobs;
+    struct MobHead mobs;
 };
-PLIST_HEAD(DungeonChunkList);
+PLIST_HEAD(DungeonChunkHead);
 
 struct Dungeon{
     size_t spatial_hash_c;
-    struct DungeonChunkList *spatial_hash;
+    struct DungeonChunkHead *spatial_hash;
 
     size_t chunk_c;
-    struct DungeonChunkList free_chunks;
+    struct DungeonChunkHead free_chunks;
     struct DungeonChunk *chunks;
 
     size_t mob_c;
@@ -43,13 +43,12 @@ struct Dungeon *dungeonCreate(void)
     struct Dungeon *d;
     assert(d = malloc(sizeof(struct Dungeon)));
 
-    assert(IS_POWER_OF_TWO(SPATIAL_HASH_COUNT));
-    size_t spatial_hash_size = 
-        sizeOverflowCheck(SPATIAL_HASH_COUNT, sizeof(struct DungeonChunkList));
-
-    assert((d->spatial_hash = malloc(spatial_hash_size)));
-    d->spatial_hash_c = SPATIAL_HASH_COUNT;
-    for(size_t i = 0; i < SPATIAL_HASH_COUNT; i++){
+    assert(IS_POWER_OF_TWO(SPATIAL_HASH_C));
+    d->spatial_hash = 
+        calloc(SPATIAL_HASH_C, sizeof(struct DungeonChunkHead));
+    d->spatial_hash_c = SPATIAL_HASH_C;
+    assert(d->spatial_hash);
+    for(size_t i = 0; i < SPATIAL_HASH_C; i++){
         PLIST_INIT(&d->spatial_hash[i]);
     }
 
@@ -57,6 +56,7 @@ struct Dungeon *dungeonCreate(void)
         sizeOverflowCheck(CHUNK_COUNT, sizeof(struct DungeonChunk));
     assert((d->chunks = malloc(chunk_arr_size)));
     memset(d->chunks, 0, chunk_arr_size);
+
     d->chunk_c = CHUNK_COUNT;
     PLIST_INIT(&d->free_chunks); 
 
@@ -69,7 +69,7 @@ struct Dungeon *dungeonCreate(void)
         chunk->tiles = malloc(tile_chunk_size);
         memset(chunk->tiles, 0, tile_chunk_size);
         PLIST_INIT(&chunk->mobs);
-        PLIST_INSERT_HEAD(d->chunks, &d->free_chunks, chunk, pos);
+        PLIST_INSERT_HEAD(d->chunks, &d->free_chunks, chunk, link);
     }
 
     size_t mob_arr_size = 
@@ -83,32 +83,34 @@ struct Dungeon *dungeonCreate(void)
     return d;
 }
 
-static struct DungeonChunkList *dungeonChunkListGet(struct Dungeon *d, uint16_t x, uint16_t y)
+static struct DungeonChunkHead *
+chunkHeadGet(struct Dungeon *d, vec16 p)
 {
-    uint32_t key = ((uint32_t)y << 16) | (uint32_t)x;
+    uint32_t key; 
+    vec16Handle(p, &key);
     size_t i = MODULO_POWER_OF_TWO(hashFunction32(key), d->spatial_hash_c);  
     return &d->spatial_hash[i];
 }
 
-static struct DungeonChunk *dungeonChunkGet(struct Dungeon *d, uint16_t x, uint16_t y)
+static struct DungeonChunk *
+chunkGet(struct Dungeon *d, vec16 p)
 {
-    struct DungeonChunkList *list = 
-        dungeonChunkListGet(d, x, y);
-    struct DungeonChunk *chunk;
-    PLIST_FOREACH(d->chunks, list, chunk, pos){
-        if(chunk->pos.x == x && chunk->pos.y == y)
-            return chunk;
+    struct DungeonChunkHead *l = chunkHeadGet(d, p);
+    struct DungeonChunk *ch;
+    PLIST_FOREACH(d->chunks, l, ch, link){
+        if(vec16Equal(ch->pos, p))
+            return ch;
     }
 
     return NULL;
 }
 
-static void dungeonChunkInsert(struct Dungeon *d, struct DungeonChunk *chunk)
+static void 
+chunkInsert(struct Dungeon *d, struct DungeonChunk *chunk)
 {
     assert(d && chunk);
-    PLIST_INSERT_HEAD(d->chunks,
-            dungeonChunkListGet(d, chunk->pos.x, chunk->pos.y),
-            chunk, pos);
+    struct DungeonChunkHead *h = chunkHeadGet(d, chunk->pos);
+    PLIST_INSERT_HEAD(d->chunks, h, chunk, link);
 }
 
 /*
@@ -121,27 +123,27 @@ static void dungeonChunkRemove(struct Dungeon *d, struct DungeonChunk *chunk)
 }
 */
 
-struct TerraPos terraPos(struct Dungeon *d, uint16_t x, uint16_t y, bool try_new)
+static inline void 
+mobPosToChunkPos(vec16 mob, vec16 out)
 {
-    /*
-    if(x < 0 || y < 0){
-        return TERRA_POS_NULL;
-    }
-    */
+    out[0] = floorDiv(mob[0], CHUNK_LENGTH);
+    out[1] = floorDiv(mob[1], CHUNK_LENGTH);
+}
 
-    uint16_t chunk_x = x / CHUNK_LENGTH;
-    uint16_t chunk_y = y / CHUNK_LENGTH;
+struct TerraPos terraPos(struct Dungeon *d, vec16 p, bool try_new)
+{
+    vec16 ch_p; 
+    mobPosToChunkPos(p, ch_p);
 
-    struct DungeonChunk *chunk = dungeonChunkGet(d, chunk_x, chunk_y);
+    struct DungeonChunk *chunk = chunkGet(d, ch_p);
     if(!chunk){
         
         if(try_new){
             chunk = PLIST_FIRST(d->chunks, &d->free_chunks);
             assert(chunk && "terraPos try_new out of memory");
-            PLIST_REMOVE_HEAD(d->chunks, &d->free_chunks, pos);
-            chunk->pos.x = chunk_x;
-            chunk->pos.y = chunk_y;
-            dungeonChunkInsert(d, chunk);
+            PLIST_REMOVE_HEAD(d->chunks, &d->free_chunks, link);
+            vec16Copy(ch_p, chunk->pos);
+            chunkInsert(d, chunk);
             // TODO check save_data for record of chunk
         }else{
             return TERRA_POS_NULL;
@@ -151,39 +153,45 @@ struct TerraPos terraPos(struct Dungeon *d, uint16_t x, uint16_t y, bool try_new
     
     return (struct TerraPos){
         .chunk = chunk,
-        .x = x % CHUNK_LENGTH,
-        .y = y % CHUNK_LENGTH,
+        .pos[0] = floorMod(p[0], CHUNK_LENGTH),
+        .pos[1] = floorMod(p[1], CHUNK_LENGTH)
     };
 }
 
 void terraPutOpaque(struct TerraPos p, bool val){
     if(!p.chunk) return;
-    bitmapPutPx(p.chunk->opaque, p.x, p.y, val);
+    bitmapPutPx(p.chunk->opaque, p.pos[0], p.pos[1], val);
 }
 
 bool terraGetOpaque(struct TerraPos p){
     if(!p.chunk) return 1;
-    return bitmapGetPx(p.chunk->opaque, p.x, p.y, 1);
+    return bitmapGetPx(p.chunk->opaque, p.pos[0], p.pos[1], 1);
 }
 
 void terraPutSolid(struct TerraPos p, bool val){
     if(!p.chunk) return;
-    bitmapPutPx(p.chunk->solid, p.x, p.y, val);
+    bitmapPutPx(p.chunk->solid, p.pos[0], p.pos[1], val);
 }
 
 bool terraGetSolid(struct TerraPos p){
     if(!p.chunk) return 1;
-    return bitmapGetPx(p.chunk->solid, p.x, p.y, 1);
+    return bitmapGetPx(p.chunk->solid, p.pos[0], p.pos[1], 1);
 }
 
 void terraPutTile(struct TerraPos p, utf32_t ch){
     if(!p.chunk) return;
-    p.chunk->tiles[p.y * CHUNK_LENGTH + p.x] = ch;
+    p.chunk->tiles[p.pos[1] * CHUNK_LENGTH + p.pos[0]] = ch;
 }
 
 utf32_t terraGetTile(struct TerraPos p){
     if(!p.chunk) return 'x';
-    return p.chunk->tiles[p.y * CHUNK_LENGTH + p.x];
+    return p.chunk->tiles[p.pos[1] * CHUNK_LENGTH + p.pos[0] ];
+}
+
+struct MobHead *mobHeadGet(struct Dungeon *d, vec16 p){
+    vec16 ch_p;
+    mobPosToChunkPos(p, ch_p);
+    return &chunkGet(d, ch_p)->mobs;
 }
 
 /* if alive true , finds next living mob in array
@@ -199,22 +207,17 @@ struct Mob *mobArrFirst(struct Dungeon *d, bool alive){
     return mobArrNext(d, d->mobs - 1, alive);
 }
 
-static struct MobList* listOfMob(struct Dungeon* d, struct Mob* mob)
-{
-    return &dungeonChunkGet(d, mob->pos.x / CHUNK_LENGTH, mob->pos.y / CHUNK_LENGTH)->mobs;
-}
-
-struct Mob* mobCreate(struct Dungeon *d, uint16_t x, uint16_t y)
+struct Mob* mobCreate(struct Dungeon *d, vec16 p)
 {
     struct Mob* mob;
     assert((mob = mobArrFirst(d, DEAD)));
 
     size_t i = mob - d->mobs; 
     bitmapPutPx(d->mob_tombs, i, 0, ALIVE);
-    
-    mob->pos.x = x;
-    mob->pos.y = y;
-    PLIST_INSERT_HEAD(d->mobs, listOfMob(d, mob), mob, pos);
+   
+    vec16Copy(p, mob->pos);
+    struct MobHead *h = mobHeadGet(d, mob->pos);
+    PLIST_INSERT_HEAD(d->mobs, h, mob, link);
 
     return mob;
 }
@@ -223,37 +226,38 @@ void mobRemove(struct Dungeon *d, struct Mob *mob)
 {
     size_t i = mob - d->mobs;
     bitmapPutPx(d->mob_tombs, i, 0, DEAD);
-    PLIST_REMOVE(d->mobs, listOfMob(d, mob), mob, pos);
+    struct MobHead *h = mobHeadGet(d, mob->pos);
+    PLIST_REMOVE(d->mobs, h, mob, link);
 }
 
-struct Mob *mobGet(struct Dungeon *d, uint16_t x, uint16_t y)
+struct Mob *mobGet(struct Dungeon *d, vec16 p)
 {
-    struct MobList *list = &dungeonChunkGet(d, x / CHUNK_LENGTH, y / CHUNK_LENGTH)->mobs;
-    struct Mob *mob;
-    PLIST_FOREACH(d->mobs, list, mob, pos){
-        if(mob->pos.x == x && mob->pos.y == y)
+    struct MobHead *h = mobHeadGet(d, p);
+    struct Mob *mob = NULL;
+    PLIST_FOREACH(d->mobs, h, mob, link){
+        if(vec16Equal(mob->pos, p))
             return mob;
     }
 
     return NULL;
 }
 
-int mobMove(struct Dungeon *d, struct Mob *mob, int16_t dx, int16_t dy)
+int mobMove(struct Dungeon *d, struct Mob *mob, vec16 dest)
 {
-    if(terraGetSolid(terraPos(d, mob->pos.x +dx, mob->pos.y +dy, 1))){
+    if(terraGetSolid(terraPos(d, dest, 1))){
+        return 1;
+    }
+    if(mobGet(d, dest)){
         return 1;
     }
 
-    if(mobGet(d, mob->pos.x +dx, mob->pos.y +dy)){
-        return 1;
-    }
+    struct MobHead *h = mobHeadGet(d, mob->pos);
+    PLIST_REMOVE(d->mobs, h, mob, link);
 
-    PLIST_REMOVE(d->mobs, listOfMob(d, mob), mob, pos);
+    vec16Copy(dest, mob->pos);
 
-    mob->pos.x += dx;
-    mob->pos.y += dy;
-
-    PLIST_INSERT_HEAD(d->mobs, listOfMob(d, mob), mob, pos);
+    h = mobHeadGet(d, mob->pos);
+    PLIST_INSERT_HEAD(d->mobs, h, mob, link);
 
     return 0;
 }

@@ -8,32 +8,32 @@
 #include "terminal.h"
 #include "plist.h"
 #include "maths.h"
+#include "ivec16.h"
 
 typedef struct Dungeon Dungeon;
 
 struct DungeonChunk;
 struct TerraPos{
     struct DungeonChunk *chunk;
-    POSITION_FIELD;
+    vec16 pos;
 };
 
 struct Mob{
-    struct{
-        PLIST_ENTRY();
-        POSITION_FIELD;
-    }pos;
+    PLIST_ENTRY() link;
+    vec16 pos;
     char ch;
 };
-PLIST_HEAD(MobList);
+
+PLIST_HEAD(MobHead);
 
 #define ALIVE 1
 #define DEAD 0
 
 struct Dungeon *dungeonCreate(void);
 
-struct Mob* mobCreate(struct Dungeon *, uint16_t, uint16_t);
+struct Mob* mobCreate(struct Dungeon *, vec16);
 void mobRemove(struct Dungeon *, struct Mob *);
-int mobMove(struct Dungeon *, struct Mob *, int16_t, int16_t);
+int mobMove(struct Dungeon *, struct Mob *, vec16);
 struct Mob *mobArrFirst(struct Dungeon *, bool);
 struct Mob *mobArrNext(struct Dungeon *, struct Mob *, bool);
 #define MOBS_FOREACH(mm_, mob_, alive_)                 \
@@ -41,7 +41,7 @@ struct Mob *mobArrNext(struct Dungeon *, struct Mob *, bool);
         (mob_);                                         \
         (mob_) = mobArrNext((mm_), (mob_), (alive_)))
 
-struct TerraPos terraPos(struct Dungeon*, uint16_t, uint16_t, bool);
+struct TerraPos terraPos(struct Dungeon*, vec16, bool);
 void terraPutOpaque(struct TerraPos, bool);
 bool terraGetOpaque(struct TerraPos);
 void terraPutSolid(struct TerraPos, bool);

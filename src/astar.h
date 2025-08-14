@@ -1,8 +1,7 @@
 #include <stdint.h>
+#include "dungeon_mem.h"
 
-struct PQue;
-struct PQueElm;
+struct AStar;
 
-int PQueInsert(struct PQue *, uint32_t, uint32_t, double, double);
-int PQuePop(struct PQue *, struct PQueElm*);
-int PQueIsDone(struct PQue *q, uint32_t val);
+int aStar(struct Dungeon *d, vec16 start, vec16 goal, struct AStar **a);
+int aStarBuildPath(struct AStar *a, vec16 *path, uint32_t *path_len);

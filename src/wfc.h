@@ -1,3 +1,5 @@
+// https://github.com/krychu/wfc/blob/master/wfc.h
+//
 // wfc
 //
 // Single-file Wave Function Collapse library

@@ -24,7 +24,7 @@ void dungeonGenerate(struct Dungeon *d)
         for(int x = 0; x < output->width; x++){
             size_t i = (y * output->width + x) * output->component_cnt;
             if(output->data[i] == 0){
-                struct TerraPos pos = terraPos(d, x, y, 1);
+                struct TerraPos pos = terraPos(d, (vec16){x, y}, 1);
                 terraPutTile(pos, 0x2593);
                 terraPutOpaque(pos, 1);
                 terraPutSolid(pos, 1);
