@@ -12,4 +12,4 @@ struct Camera{
     int32_t view_height;
 };
 
-int drawMobs(struct Dungeon*, vec16);
+int drawDungeon(struct Dungeon*, vec16);

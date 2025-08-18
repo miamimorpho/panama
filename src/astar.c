@@ -6,9 +6,6 @@
 
 #include "dungeon_mem.h"
 
-// hash tables are broken!
-// store all positions in one hash table, add flag
-
 enum State{
     EMPTY_HASH,
     CLOSED,
@@ -42,8 +39,8 @@ struct AStar *pQueCreate(void){
 
     struct AStar *q = malloc(sizeof(struct AStar));
     *q = (struct AStar){0};
-    q->hash_max = 1024;
-    q->heap_max = 1024;
+    q->hash_max = 1024 * 16;
+    q->heap_max = 1024 * 16;
     q->heap = calloc(q->heap_max, sizeof(uint32_t));
     q->hash = calloc(q->hash_max, sizeof(struct AStarNode));
     for(uint32_t i = 0; i < q->hash_max; i++){

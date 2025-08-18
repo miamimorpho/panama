@@ -80,6 +80,7 @@ struct Dungeon *dungeonCreate(void)
     d->mob_tombs = bitmapCreate(MOBILE_COUNT, 1);
     bitmapFill(d->mob_tombs, 0);
 
+
     return d;
 }
 
@@ -124,16 +125,22 @@ static void dungeonChunkRemove(struct Dungeon *d, struct DungeonChunk *chunk)
 */
 
 static inline void 
-mobPosToChunkPos(vec16 mob, vec16 out)
+posToChunkPos(vec16 mob, vec16 out)
 {
     out[0] = floorDiv(mob[0], CHUNK_LENGTH);
     out[1] = floorDiv(mob[1], CHUNK_LENGTH);
 }
 
+struct MobHead *mobHeadGet(struct Dungeon *d, vec16 p){
+    vec16 ch_p;
+    posToChunkPos(p, ch_p);
+    return &chunkGet(d, ch_p)->mobs;
+}
+
 struct TerraPos terraPos(struct Dungeon *d, vec16 p, bool try_new)
 {
     vec16 ch_p; 
-    mobPosToChunkPos(p, ch_p);
+    posToChunkPos(p, ch_p);
 
     struct DungeonChunk *chunk = chunkGet(d, ch_p);
     if(!chunk){
@@ -188,15 +195,10 @@ utf32_t terraGetTile(struct TerraPos p){
     return p.chunk->tiles[p.pos[1] * CHUNK_LENGTH + p.pos[0] ];
 }
 
-struct MobHead *mobHeadGet(struct Dungeon *d, vec16 p){
-    vec16 ch_p;
-    mobPosToChunkPos(p, ch_p);
-    return &chunkGet(d, ch_p)->mobs;
-}
-
 /* if alive true , finds next living mob in array
  * if false, finds next dead mob
  */
+
 struct Mob *mobArrNext(struct Dungeon *d, struct Mob *n, bool alive){
     size_t i = n - d->mobs + 1;
     while(alive ^ bitmapGetPx(d->mob_tombs, i, 0, alive)) i++;
@@ -206,6 +208,7 @@ struct Mob *mobArrNext(struct Dungeon *d, struct Mob *n, bool alive){
 struct Mob *mobArrFirst(struct Dungeon *d, bool alive){
     return mobArrNext(d, d->mobs - 1, alive);
 }
+
 
 struct Mob* mobCreate(struct Dungeon *d, vec16 p)
 {

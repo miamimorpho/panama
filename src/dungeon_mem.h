@@ -10,21 +10,22 @@
 #include "maths.h"
 #include "ivec16.h"
 
+typedef const vec16 *PosView;
+
 typedef struct Dungeon Dungeon;
+
+struct Mob{
+    PLIST_ENTRY() link;
+    vec16 pos;
+    utf32_t ch;
+};
+PLIST_HEAD(MobHead);
 
 struct DungeonChunk;
 struct TerraPos{
     struct DungeonChunk *chunk;
     vec16 pos;
 };
-
-struct Mob{
-    PLIST_ENTRY() link;
-    vec16 pos;
-    char ch;
-};
-
-PLIST_HEAD(MobHead);
 
 #define ALIVE 1
 #define DEAD 0
