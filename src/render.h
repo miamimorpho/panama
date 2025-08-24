@@ -1,5 +1,6 @@
 #include <stdint.h>
-#include "dungeon_mem.h"
+#include "dungeon.h"
+#include "ivec16.h"
 
 struct Camera{
     int32_t old_x;

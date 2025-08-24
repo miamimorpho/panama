@@ -1,3 +1,6 @@
+#ifndef VEC16_H
+#define VEC16_H
+
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -49,3 +52,4 @@ vec16Comp(uint32_t h, vec16 out){
     out[1] = (int16_t)((h >> 16) & 0xFFFF);
 }
 
+#endif // IVEC16_H

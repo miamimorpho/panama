@@ -1,6 +1,7 @@
 #include "render.h"
 #include "terminal.h"
 #include "fov.h"
+#include "monster.h"
 
 struct FovDrawCtx{
     vec16 offset;
@@ -15,6 +16,9 @@ void fovDrawFn(struct FovEffect *p, struct TerraPos ter, vec16 in)
     };
     termCh(ui, terraGetTile(ter));
 }
+
+// fog of war
+// change draw to bitmap
 
 int drawDungeon(struct Dungeon *d, vec16 o)
 {
@@ -36,6 +40,12 @@ int drawDungeon(struct Dungeon *d, vec16 o)
 
     fov(d, o, &draw);
 
+    for(int i = 0; !monsterEnd(d->monsters, i); i++){
+        vec16 p;
+        monsterPos(d, i, p);
+        termCh((struct TermUI){p[0] - cam_x, p[1] - cam_y}, *monsterTile(d, i));
+    }
+
     /*
     for(int y = 0; y < h; y++){
         for(int x = 0; x < w; x++){
@@ -46,11 +56,6 @@ int drawDungeon(struct Dungeon *d, vec16 o)
         }
     }
     */
-
-    struct Mob *mob;
-    MOBS_FOREACH(d, mob, ALIVE){
-        termCh((struct TermUI){mob->pos[0] - cam_x, mob->pos[1] - cam_y}, mob->ch);
-    }
 
     return 0;
 }

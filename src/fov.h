@@ -1,4 +1,5 @@
-#include "dungeon_mem.h"
+#include "dungeon.h"
+#include "space.h"
 
 struct FovEffect;
 typedef void (*FovEffectFn)(struct FovEffect *, struct TerraPos, vec16);

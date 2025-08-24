@@ -1,23 +1,29 @@
 #include "controls.h"
 #include "terminal.h"
 
-int userInput(struct Dungeon *d, struct Mob* pla)
+int userInput(struct Dungeon *d, Monster pla)
 {
+    vec16 start, next;
+    monsterPos(d, pla, start);
+    vec16Copy(start, next);
+
     switch (termIn()){
         case T_KEY_UP:
-            mobMove(d, pla, VEC16_NORTH(pla->pos));
+            vec16Copy(VEC16_NORTH(start), next);
             break;
         case T_KEY_DOWN:
-            mobMove(d, pla, VEC16_SOUTH(pla->pos));
+            vec16Copy(VEC16_SOUTH(start), next);
             break;
         case T_KEY_LEFT:
-            mobMove(d, pla, VEC16_WEST(pla->pos));
+            vec16Copy(VEC16_WEST(start), next);
             break;
         case T_KEY_RIGHT:
-            mobMove(d, pla, VEC16_EAST(pla->pos));
+            vec16Copy(VEC16_EAST(start), next);
             break;
         default:
-            return 0;
+            return 1;
     }
+
+    monsterMove(d, pla, next);
     return 0;
 }

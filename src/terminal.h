@@ -2,8 +2,7 @@
 #define TERM_H
 
 #include <stdint.h>
-
-typedef uint32_t utf32_t;
+#include "utf32.h"
 
 struct TermUI{
     int32_t x;

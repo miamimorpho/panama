@@ -1,4 +1,4 @@
-#include "dungeon_mem.h"
+#include "monster.h"
 
-int userInput(struct Dungeon *, struct Mob*);
+int userInput(struct Dungeon *, Monster);
 

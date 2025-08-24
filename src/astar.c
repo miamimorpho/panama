@@ -1,10 +1,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "astar.h"
-#include "plist.h"
-#include "maths.h" 
-
-#include "dungeon_mem.h"
+#include "space.h"
 
 enum State{
     EMPTY_HASH,
@@ -286,29 +283,29 @@ int aStarBuildPath(struct AStar *a, vec16 *path, uint32_t *path_len){
 }
 
 static void
-getNesw_(struct Dungeon *d, vec16 tmp,
+getNesw_(struct Space *s, vec16 tmp,
         vec16 nesw[4], uint32_t *c)
 {
     struct TerraPos p;
-    p = terraPos(d, tmp, 0);
+    p = terraPos(s, tmp, 0);
     if(!terraGetSolid(p)){
         vec16Copy(tmp, nesw[*c]); 
         (*c)++;
     }
 }
 
-static void getNesw(struct Dungeon *d, vec16 o, 
+static void getNesw(struct Space *s, vec16 o, 
         vec16 nesw[4], uint32_t *c)
 {  
     vec16 tmp;
     vec16Copy(VEC16_NORTH(o), tmp);   // E
-    getNesw_(d, tmp, nesw, c);
+    getNesw_(s, tmp, nesw, c);
     vec16Copy(VEC16_EAST(o), tmp); 
-    getNesw_(d, tmp, nesw, c);
+    getNesw_(s, tmp, nesw, c);
     vec16Copy(VEC16_SOUTH(o), tmp);
-    getNesw_(d, tmp, nesw, c);
+    getNesw_(s, tmp, nesw, c);
     vec16Copy(VEC16_WEST(o), tmp);
-    getNesw_(d, tmp, nesw, c);
+    getNesw_(s, tmp, nesw, c);
 }
 
 int aStar(struct Dungeon *d, vec16 start, vec16 goal, struct AStar **aa){
@@ -334,7 +331,7 @@ int aStar(struct Dungeon *d, vec16 start, vec16 goal, struct AStar **aa){
             goto end;            
     
         vec16 nesw[4]; uint32_t nesw_c = 0;
-        getNesw(d, current.pos, nesw, &nesw_c);
+        getNesw(d->space, current.pos, nesw, &nesw_c);
 
         for(uint32_t i = 0; i < nesw_c; i++){
 

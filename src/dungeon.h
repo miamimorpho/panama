@@ -1,3 +1,11 @@
-#include "dungeon_mem.h"
+#ifndef DUNGEON_H
+#define DUNGEON_H
 
-void dungeonGenerate(struct Dungeon*);
+struct Dungeon{
+    struct Space *space;
+    struct Monsters *monsters;
+};
+
+void dungeonGenerate(struct Dungeon *);
+
+#endif //DUNGEON_H
