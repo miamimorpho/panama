@@ -66,7 +66,9 @@ spaceCreate(void)
         chunk->opaque = bitmapCreate(CHUNK_LENGTH, CHUNK_LENGTH);
         chunk->tiles = malloc(tile_chunk_size);
         memset(chunk->tiles, 0, tile_chunk_size);
-        PLIST_INIT(&chunk->heads[0]);
+        for(int n = 0; n < TYPE_COUNT; n++){
+            PLIST_INIT(&chunk->heads[n]);
+        }
         PLIST_INSERT_HEAD(d->chunks, &d->free_chunks, chunk, link);
     }
 
@@ -185,12 +187,17 @@ mobileArrayCreate(size_t c, enum MobileType type)
 {
 
     struct MobileArray out = {0};
+    out.c = c;
 
     size_t size = 
         sizeOverflowCheck(c, sizeof(struct Mobile));
-    assert((out.arr = malloc(size)));
-    memset(out.arr, 0, size);
+    assert((out.root = malloc(size)));
+    memset(out.root, 0, size);
     out.type = type;
+
+    for(unsigned int i = 0; i < c; i++){
+        PLIST_INSERT_HEAD(out.root, &out.free, &out.root[i], link);
+    }
 
     return out;
 }
@@ -202,52 +209,155 @@ mobileHeadGet(struct Space *d, enum MobileType type, vec16 p){
     return &chunkGet(d, ch_p)->heads[type];
 }
 
-void
-mobileInsert(struct Space *s, struct MobileArray src, size_t i, vec16 to)
-{    
-    struct Mobile *mob = &src.arr[i];
-    vec16Copy(to, mob->pos);
-    struct MobileHead *h = mobileHeadGet(s, src.type, mob->pos);
-    PLIST_INSERT_HEAD(src.arr, h, mob, link);
+SpaceErr
+mobileCreate(struct Space *s, struct MobileArray *arr, 
+        vec16 where, Handle *i)
+{
+    struct Mobile *mob;
+    if(!(mob = PLIST_FIRST(arr->root, &arr->free)))
+        return SPACE_ERR;
+
+    *i = mob - arr->root;
+    PLIST_REMOVE(arr->root, &arr->free, mob, link);
+
+    vec16Copy(where, mob->pos);
+    struct MobileHead *h = mobileHeadGet(s, arr->type, mob->pos);
+    PLIST_INSERT_HEAD(arr->root, h, mob, link);
+
+    return SPACE_OK;
 }
 
-void
-mobileRemove(struct Space *s, struct MobileArray src, size_t i){
-    struct Mobile *mob = &src.arr[i];
-    struct MobileHead *h = mobileHeadGet(s, src.type, mob->pos);
-    PLIST_REMOVE(src.arr, h, mob, link);
+SpaceErr
+mobileRemove(struct Space *s, struct MobileArray *arr, Handle i){
+    if(i >= arr->c){
+        return SPACE_ERR;
+    }
+    struct Mobile *mob = &arr->root[i];
+    struct MobileHead *h = mobileHeadGet(s, arr->type, mob->pos);
+    PLIST_REMOVE(arr->root, h, mob, link);
+    PLIST_INSERT_HEAD(arr->root, &arr->free, mob, link);
+
+    return SPACE_OK;
 }
 
-int 
-mobileMove(struct Space *s, struct MobileArray src, size_t i, vec16 dest)
+SpaceErr 
+mobileMove(struct Space *s, struct MobileArray *arr, Handle i, vec16 dest)
 {
     if(terraGetSolid(terraPos(s, dest, 1))){
-        return 1;
+        return SPACE_FAIL;
     }
 
-    struct Mobile *mob = &src.arr[i];
+    struct Mobile *mob = &arr->root[i];
     struct MobileHead *h = 
-        mobileHeadGet(s, src.type, mob->pos);
-    PLIST_REMOVE(src.arr, h, mob, link);
+        mobileHeadGet(s, arr->type, mob->pos);
+    PLIST_REMOVE(arr->root, h, mob, link);
 
     vec16Copy(dest, mob->pos);
 
-    h = mobileHeadGet(s, src.type, mob->pos);
-    PLIST_INSERT_HEAD(src.arr, h, mob, link);
+    h = mobileHeadGet(s, arr->type, mob->pos);
+    PLIST_INSERT_HEAD(arr->root, h, mob, link);
 
-    return 0;
+    return SPACE_OK;
 }
 
-struct Mobile *
-mobileGet(struct Space *d, struct MobileArray src, vec16 p)
+SpaceErr
+mobileGet(struct Space *d, struct MobileArray *arr, vec16 p, Handle *out)
 {
     struct MobileHead *h = 
-        mobileHeadGet(d, src.type, p);
+        mobileHeadGet(d, arr->type, p);
     struct Mobile *mob = NULL;
-    PLIST_FOREACH(src.arr, h, mob, link){
-        if(vec16Equal(mob->pos, p))
-            return mob;
+    PLIST_FOREACH(arr->root, h, mob, link){
+        if(vec16Equal(mob->pos, p)){
+            *out = mob - arr->root;
+            return SPACE_OK;
+        }
+    }
+
+    return SPACE_FAIL;
+}
+
+static struct Mobile*
+findFirstMobileInChunk(struct MobileFinder *find, uint32_t chunk_i)
+{
+    if(chunk_i >= find->total_chunks)
+        return NULL;
+
+    int32_t dx = chunk_i % find->length;
+    int32_t dy = chunk_i / find->length;
+
+    vec16 chunk_pos = {
+        find->origin_chunk[0] - (find->length / 2) + dx,
+        find->origin_chunk[1] - (find->length / 2) + dy,
+    };
+
+    struct SpaceChunk *chunk =
+        chunkGet(find->s, chunk_pos);
+    if(!chunk) return NULL;
+
+    struct MobileHead *h =
+        &chunk->heads[find->arr->type];
+
+    struct Mobile *next;
+    if((next = PLIST_FIRST(find->arr->root, h)))
+        return next;
+    else
+        return NULL;
+}
+
+struct Mobile*
+mobileFindNext(struct MobileFinder *find)
+{
+    if(find->cur_mobile){
+        struct Mobile* next = 
+            PLIST_NEXT(find->arr->root, find->cur_mobile, link);
+        if(next) {
+            find->cur_mobile = next;
+            return next;
+        }
+        find->cur_mobile = NULL;
+    }
+
+    // move to next chunk
+    find->cur_chunk++;
+
+    while(find->cur_chunk < find->total_chunks){
+        struct Mobile *first =
+            findFirstMobileInChunk(find, find->cur_chunk);
+        if(first){
+            find->cur_mobile = first;
+            return first;
+        }
+        find->cur_chunk++;
     }
 
     return NULL;
 }
+
+struct Mobile*
+mobileFindStart(struct Space *s,
+        struct MobileArray *arr,
+        vec16 o,
+        uint32_t range,
+        struct MobileFinder *find)
+{
+    *find = (struct MobileFinder){0};
+    find->arr = arr;
+    find->s = s;
+    posToChunkPos(o, find->origin_chunk);
+    uint32_t radius = range / 2;
+    find->length = 2 * radius + 1;
+    find->total_chunks = find->length * find->length;
+   
+    find->cur_chunk = 0;
+    find->cur_mobile = NULL;
+    
+    struct Mobile *first = findFirstMobileInChunk(find, 0);
+    if(first){
+        find->cur_mobile = first;
+        return first;
+    }
+    
+    return mobileFindNext(find);
+
+}
+

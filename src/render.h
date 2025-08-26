@@ -1,5 +1,5 @@
 #include <stdint.h>
-#include "dungeon.h"
+#include "dungeon_public.h"
 #include "ivec16.h"
 
 struct Camera{

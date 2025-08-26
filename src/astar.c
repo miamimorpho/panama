@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "astar.h"
-#include "space.h"
+#include "maths.h"
 
 enum State{
     EMPTY_HASH,

@@ -40,10 +40,16 @@ int drawDungeon(struct Dungeon *d, vec16 o)
 
     fov(d, o, &draw);
 
-    for(int i = 0; !monsterEnd(d->monsters, i); i++){
-        vec16 p;
-        monsterPos(d, i, p);
-        termCh((struct TermUI){p[0] - cam_x, p[1] - cam_y}, *monsterTile(d, i));
+    struct MobileFinder finder;
+    MOBILE_FIND(d->space, &d->monsters->mobs, o, 2, &finder){
+        Monster m = finder.cur_mobile - d->monsters->mobs.root;
+        struct Mobile *mon = &d->monsters->mobs.root[m];
+        struct TermUI ui = {
+           mon->pos[0] - cam_x,
+           mon->pos[1] - cam_y,
+        };
+        utf32_t ch = *monsterTile(d, m);
+        termCh(ui, ch);
     }
 
     /*

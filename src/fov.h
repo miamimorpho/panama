@@ -1,4 +1,3 @@
-#include "dungeon.h"
 #include "space.h"
 
 struct FovEffect;

@@ -1,20 +1,15 @@
-#include <stdint.h>
-#include "dungeon.h"
-#include "ivec16.h"
-#include "utf32.h"
+#include "space.h"
 
-#define ALIVE 1
-#define DEAD 0
+typedef Handle Monster;
 
-#define MONSTER_NULL UINT64_MAX
-
-typedef uint64_t Monster;
+struct Monsters{ 
+    struct MobileArray mobs;
+    utf32_t *tiles;
+};
 
 struct Monsters *monsterManCreate(void);
-Monster monsterCreate(struct Dungeon *d, vec16 p);
-int monsterMove(struct Dungeon *d, Monster mon, vec16 next);
-int monsterGet(struct Dungeon *d, vec16 in, Monster *out);
-int monsterPos(struct Dungeon *d, Monster n, vec16 out);
+int monsterCreate(struct Dungeon *, vec16 , Monster*);
+int monsterMove(struct Dungeon *, Monster, vec16);
+int monsterGet(struct Dungeon *, vec16, Monster*);
 utf32_t *monsterTile(struct Dungeon *d, Monster n);
-
-Monster monsterEnd(struct Monsters *ctx, Monster n);
+int monsterWhere(struct Dungeon *d, Monster n, vec16 out);

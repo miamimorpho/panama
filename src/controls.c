@@ -4,7 +4,7 @@
 int userInput(struct Dungeon *d, Monster pla)
 {
     vec16 start, next;
-    monsterPos(d, pla, start);
+    monsterWhere(d, pla, start);
     vec16Copy(start, next);
 
     switch (termIn()){
