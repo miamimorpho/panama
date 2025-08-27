@@ -70,7 +70,8 @@ struct Mobile* mobileFindNext(struct MobileFinder *);
             mob != NULL;    \
             mob = mobileFindNext(finder))   \
 
-struct TerraPos terraPos(struct Space *, vec16, bool);
+struct TerraPos terraPosNew(struct Space* d, vec16 p);
+struct TerraPos terraPos(struct Space *, vec16);
 void terraPutOpaque(struct TerraPos, bool);
 bool terraGetOpaque(struct TerraPos);
 void terraPutSolid(struct TerraPos, bool);

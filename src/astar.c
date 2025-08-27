@@ -287,7 +287,7 @@ getNesw_(struct Space *s, vec16 tmp,
         vec16 nesw[4], uint32_t *c)
 {
     struct TerraPos p;
-    p = terraPos(s, tmp, 0);
+    p = terraPos(s, tmp);
     if(!terraGetSolid(p)){
         vec16Copy(tmp, nesw[*c]); 
         (*c)++;

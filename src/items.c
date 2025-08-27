@@ -1,15 +1,8 @@
 #include <string.h>
 #include "items.h"
-#include "space.h"
 
 #define ITEM_COUNT 128
 
-struct ItemMan{
-    struct MobileArray mobs;
-    utf32_t *tiles;
-    struct ItemStats *stats;
-    char **names;
-};
 
 struct ItemMan *itemManCreate(void)
 {

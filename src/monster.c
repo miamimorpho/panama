@@ -25,8 +25,8 @@ int monsterCreate(struct Dungeon *d, vec16 where, Monster *out){
 
 int monsterMove(struct Dungeon *d, Monster mon, vec16 next){
 
-    Monster mons;
-    if(!mobileGet(d->space, &d->monsters->mobs, next, &mons)){
+    Monster next_mons;
+    if(!mobileGet(d->space, &d->monsters->mobs, next, &next_mons)){
         return 1;
     }
 

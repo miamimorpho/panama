@@ -2,6 +2,7 @@
 #include "terminal.h"
 #include "fov.h"
 #include "monster.h"
+#include "items.h"
 
 struct FovDrawCtx{
     vec16 offset;
@@ -40,6 +41,18 @@ int drawDungeon(struct Dungeon *d, vec16 o)
 
     fov(d, o, &draw);
 
+    struct MobileFinder item_finder;
+    MOBILE_FIND(d->space, &d->items->mobs, o, 2, &item_finder){
+        Item i = item_finder.cur_mobile - d->items->mobs.root;
+        struct Mobile *item = &d->items->mobs.root[i];
+        struct TermUI ui = {
+            item->pos[0] - cam_x,
+            item->pos[1] - cam_y,
+        };
+        utf32_t ch = d->items->tiles[i];
+        termCh(ui, ch);
+    }
+
     struct MobileFinder finder;
     MOBILE_FIND(d->space, &d->monsters->mobs, o, 2, &finder){
         Monster m = finder.cur_mobile - d->monsters->mobs.root;
@@ -51,6 +64,7 @@ int drawDungeon(struct Dungeon *d, vec16 o)
         utf32_t ch = *monsterTile(d, m);
         termCh(ui, ch);
     }
+
 
     /*
     for(int y = 0; y < h; y++){

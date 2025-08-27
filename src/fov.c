@@ -104,7 +104,7 @@ scanRow(struct Row cur, struct Dungeon *d, float depth_max, struct FovEffect *ef
         vec16 pos;
         shadowToWorldPos(cur.dir, cur.depth, col, cur.camera, pos);
 
-        struct TerraPos ter = terraPos(d->space, pos, 0);
+        struct TerraPos ter = terraPos(d->space, pos);
         bool is_wall = terraGetOpaque(ter);
 
         if(!is_wall || isSymmetric(&cur, col)){
@@ -132,7 +132,7 @@ scanRow(struct Row cur, struct Dungeon *d, float depth_max, struct FovEffect *ef
 
 void
 fov(struct Dungeon *d, vec16 o, struct FovEffect *effect){
-    struct TerraPos ter = terraPos(d->space, o, 0);
+    struct TerraPos ter = terraPos(d->space, o);
     effect->fn(effect, ter, o);
     struct Row first = {
         .depth = 1,    

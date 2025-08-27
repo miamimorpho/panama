@@ -123,30 +123,30 @@ posToChunkPos(vec16 mob, vec16 out)
     out[1] = floorDiv(mob[1], CHUNK_LENGTH);
 }
 
+struct TerraPos
+terraPosNew(struct Space* d, vec16 p)
+{
+    struct TerraPos ter = terraPos(d, p);
+    if(!ter.chunk){
+        
+        ter.chunk = PLIST_FIRST(d->chunks, &d->free_chunks);
+        assert(ter.chunk && "terraPos try_new out of memory");
+        PLIST_REMOVE_HEAD(d->chunks, &d->free_chunks, link);
 
-struct TerraPos terraPos(struct Space *d, vec16 p, bool try_new)
+        posToChunkPos(p, ter.chunk->pos);
+        chunkInsert(d, ter.chunk);
+        // TODO check save_data for record of chunk    
+    }
+    return ter;
+}
+
+struct TerraPos terraPos(struct Space *d, vec16 p)
 {
     vec16 ch_p; 
     posToChunkPos(p, ch_p);
 
-    struct SpaceChunk *chunk = chunkGet(d, ch_p);
-    if(!chunk){
-        
-        if(try_new){
-            chunk = PLIST_FIRST(d->chunks, &d->free_chunks);
-            assert(chunk && "terraPos try_new out of memory");
-            PLIST_REMOVE_HEAD(d->chunks, &d->free_chunks, link);
-            vec16Copy(ch_p, chunk->pos);
-            chunkInsert(d, chunk);
-            // TODO check save_data for record of chunk
-        }else{
-            return TERRA_POS_NULL;
-        }
-    
-    }
-    
     return (struct TerraPos){
-        .chunk = chunk,
+        .chunk = chunkGet(d, ch_p),
         .pos[0] = floorMod(p[0], CHUNK_LENGTH),
         .pos[1] = floorMod(p[1], CHUNK_LENGTH)
     };
@@ -206,7 +206,11 @@ struct MobileHead *
 mobileHeadGet(struct Space *d, enum MobileType type, vec16 p){
     vec16 ch_p;
     posToChunkPos(p, ch_p);
-    return &chunkGet(d, ch_p)->heads[type];
+    struct SpaceChunk* chu = chunkGet(d, ch_p);
+    if(chu)
+        return &chu->heads[type];
+
+    return NULL;
 }
 
 SpaceErr
@@ -243,7 +247,7 @@ mobileRemove(struct Space *s, struct MobileArray *arr, Handle i){
 SpaceErr 
 mobileMove(struct Space *s, struct MobileArray *arr, Handle i, vec16 dest)
 {
-    if(terraGetSolid(terraPos(s, dest, 1))){
+    if(terraGetSolid(terraPos(s, dest))){
         return SPACE_FAIL;
     }
 
@@ -265,7 +269,9 @@ mobileGet(struct Space *d, struct MobileArray *arr, vec16 p, Handle *out)
 {
     struct MobileHead *h = 
         mobileHeadGet(d, arr->type, p);
-    struct Mobile *mob = NULL;
+    if(!h) return SPACE_FAIL;
+
+    struct Mobile *mob;
     PLIST_FOREACH(arr->root, h, mob, link){
         if(vec16Equal(mob->pos, p)){
             *out = mob - arr->root;

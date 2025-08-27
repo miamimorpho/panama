@@ -43,7 +43,7 @@ int main(void) {
         aStarBuildPath(aa, NULL, &path_len);
         aStarBuildPath(aa, path, &path_len);
         if(path_len){
-            //monsterMove(&d, goblin, path[path_len -1]);
+            monsterMove(&d, goblin, path[path_len -1]);
         }
         drawDungeon(&d, p2);
         termRefresh();

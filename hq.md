@@ -1,17 +1,5 @@
 Game Architecture
 
-keep the C code really small and fast
-position
-collision
-items
-terrain
-astar
-shadowcasting
-wfc
-
-update script should be all lua
-
-
 Prose speech
 "the man ran over there" -> linear speech
 Poetic speech
