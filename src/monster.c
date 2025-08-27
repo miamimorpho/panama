@@ -61,7 +61,8 @@ int monsterMove(struct Dungeon *d, Monster mon, vec16 next, Monster *dst){
         return 1;
     }
 
-    return mobileMove(d->space, &d->monsters->mobs, mon, next);
+    mobileMove(d->space, &d->monsters->mobs, mon, next);
+    return 0;
 }
 
 void monsterUpdateHealth(struct Monsters *mons, Monster i){
