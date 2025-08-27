@@ -3,6 +3,7 @@
 
 #include "space.h"
 #include "bitmap.h"
+#include "arr.h"
 
 #define CHUNK_LENGTH 16
 #define TERRA_POS_NULL (struct TerraPos){0}
@@ -50,15 +51,14 @@ spaceCreate(void)
         PLIST_INIT(&d->hash[i]);
     }
 
-    size_t chunk_arr_size = 
-        sizeOverflowCheck(CHUNK_COUNT, sizeof(struct SpaceChunk));
-    assert((d->chunks = malloc(chunk_arr_size)));
-    memset(d->chunks, 0, chunk_arr_size);
+    size_t chunk_arr_size = 0;
+    d->chunks = arrMalloc(CHUNK_COUNT, sizeof(struct SpaceChunk), 
+            &chunk_arr_size);
 
     d->chunk_c = CHUNK_COUNT;
     PLIST_INIT(&d->free_chunks); 
 
-    size_t tile_chunk_size = sizeOverflowCheck(CHUNK_LENGTH * CHUNK_LENGTH, sizeof(utf32_t));
+    size_t tile_chunk_size = arrOverflowCheck(CHUNK_LENGTH * CHUNK_LENGTH, sizeof(utf32_t));
     for(unsigned int i = 0; i < CHUNK_COUNT; i++){
         struct SpaceChunk *chunk = &d->chunks[i];
         *chunk = (struct SpaceChunk){0};
@@ -185,14 +185,10 @@ utf32_t terraGetTile(struct TerraPos p){
 struct MobileArray
 mobileArrayCreate(size_t c, enum MobileType type)
 {
-
     struct MobileArray out = {0};
+    size_t size;
+    out.root = arrMalloc(c, sizeof(struct Mobile), &size); 
     out.c = c;
-
-    size_t size = 
-        sizeOverflowCheck(c, sizeof(struct Mobile));
-    assert((out.root = malloc(size)));
-    memset(out.root, 0, size);
     out.type = type;
 
     for(unsigned int i = 0; i < c; i++){
@@ -202,15 +198,11 @@ mobileArrayCreate(size_t c, enum MobileType type)
     return out;
 }
 
-struct MobileHead *
-mobileHeadGet(struct Space *d, enum MobileType type, vec16 p){
-    vec16 ch_p;
-    posToChunkPos(p, ch_p);
-    struct SpaceChunk* chu = chunkGet(d, ch_p);
-    if(chu)
-        return &chu->heads[type];
-
-    return NULL;
+struct SpaceChunk *
+mobileGetChunk(struct Space *d, vec16 p){
+    vec16 chup;
+    posToChunkPos(p, chup);
+    return chunkGet(d, chup);
 }
 
 SpaceErr
@@ -225,7 +217,11 @@ mobileCreate(struct Space *s, struct MobileArray *arr,
     PLIST_REMOVE(arr->root, &arr->free, mob, link);
 
     vec16Copy(where, mob->pos);
-    struct MobileHead *h = mobileHeadGet(s, arr->type, mob->pos);
+    struct SpaceChunk *chu = mobileGetChunk(s, where);
+    if(!chu)
+        return SPACE_FAIL;
+
+    struct MobileHead *h = &chu->heads[arr->type];
     PLIST_INSERT_HEAD(arr->root, h, mob, link);
 
     return SPACE_OK;
@@ -237,7 +233,8 @@ mobileRemove(struct Space *s, struct MobileArray *arr, Handle i){
         return SPACE_ERR;
     }
     struct Mobile *mob = &arr->root[i];
-    struct MobileHead *h = mobileHeadGet(s, arr->type, mob->pos);
+    struct SpaceChunk *chu = mobileGetChunk(s, mob->pos);
+    struct MobileHead *h = &chu->heads[arr->type];
     PLIST_REMOVE(arr->root, h, mob, link);
     PLIST_INSERT_HEAD(arr->root, &arr->free, mob, link);
 
@@ -251,14 +248,17 @@ mobileMove(struct Space *s, struct MobileArray *arr, Handle i, vec16 dest)
         return SPACE_FAIL;
     }
 
+    struct SpaceChunk *next_sc;
+    if(!(next_sc = mobileGetChunk(s, dest)))
+        return SPACE_FAIL;
+
     struct Mobile *mob = &arr->root[i];
-    struct MobileHead *h = 
-        mobileHeadGet(s, arr->type, mob->pos);
+    struct SpaceChunk *sc = mobileGetChunk(s, mob->pos);
+    struct MobileHead *h = &sc->heads[arr->type];
     PLIST_REMOVE(arr->root, h, mob, link);
 
     vec16Copy(dest, mob->pos);
-
-    h = mobileHeadGet(s, arr->type, mob->pos);
+    h = &next_sc->heads[arr->type];
     PLIST_INSERT_HEAD(arr->root, h, mob, link);
 
     return SPACE_OK;
@@ -267,10 +267,11 @@ mobileMove(struct Space *s, struct MobileArray *arr, Handle i, vec16 dest)
 SpaceErr
 mobileGet(struct Space *d, struct MobileArray *arr, vec16 p, Handle *out)
 {
-    struct MobileHead *h = 
-        mobileHeadGet(d, arr->type, p);
-    if(!h) return SPACE_FAIL;
+    struct SpaceChunk *sc = mobileGetChunk(d, p);
+    if(!sc)
+        return SPACE_FAIL;
 
+    struct MobileHead *h = &sc->heads[arr->type];
     struct Mobile *mob;
     PLIST_FOREACH(arr->root, h, mob, link){
         if(vec16Equal(mob->pos, p)){

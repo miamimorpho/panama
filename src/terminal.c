@@ -10,7 +10,7 @@
 #include <locale.h>
 
 #include "terminal.h"
-#include "maths.h"
+#include "arr.h"
 
 /* Output focused ANSI escape sequences */
 #define      with ";"
@@ -184,7 +184,7 @@ int64_t termIn(void){
 
 void termClear(void){
     size_t size = 
-        sizeOverflowCheck(term_g.width * term_g.height, sizeof(struct TermChar));
+        arrOverflowCheck(term_g.width * term_g.height, sizeof(struct TermChar));
     memset(term_g.buffer[term_g.frame_x], 0, size);
 }
 
@@ -197,7 +197,7 @@ static void resizeMalloc(void){
         SAY(esca term_clear);
         
         size_t size = 
-            sizeOverflowCheck( term_g.width * term_g.height, sizeof(struct TermChar));
+            arrOverflowCheck( term_g.width * term_g.height, sizeof(struct TermChar));
         term_g.buffer[0] = realloc(term_g.buffer[0], size);
         memset(term_g.buffer[0], 0, size);
         term_g.buffer[1] = realloc(term_g.buffer[1], size);

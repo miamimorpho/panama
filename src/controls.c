@@ -24,6 +24,9 @@ int userInput(struct Dungeon *d, Monster pla)
             return 1;
     }
 
-    monsterMove(d, pla, next);
+    Monster def;
+    if(monsterMove(d, pla, next, &def)){ 
+        monsterAttack(d, pla, def);
+    }
     return 0;
 }

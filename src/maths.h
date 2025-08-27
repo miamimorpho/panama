@@ -27,13 +27,6 @@ hashFunction32(uint32_t n)
 	return n;
 }
 
-static inline size_t sizeOverflowCheck(size_t nmemb, size_t stride)
-{
-    assert(stride > 0 && "stride cannot be zero");
-    assert(nmemb <= SIZE_MAX / stride && "multiplication overflow");
-    return nmemb * stride;
-}
-
 #define container_of(ptr, type, member) \
     ((type *)((char *)(ptr) - offsetof(type, member)))
 

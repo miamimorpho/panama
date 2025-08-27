@@ -1,5 +1,6 @@
 #include <string.h>
 #include "items.h"
+#include "arr.h"
 
 #define ITEM_COUNT 128
 
@@ -9,21 +10,15 @@ struct ItemMan *itemManCreate(void)
     struct ItemMan *m = malloc(sizeof(struct ItemMan));
 
     m->mobs = mobileArrayCreate(ITEM_COUNT, ITEMS);
-    
-    size_t tile_size =
-        sizeOverflowCheck(ITEM_COUNT, sizeof(utf32_t));
-    assert((m->tiles = malloc(tile_size)));
-    memset(m->tiles, 0, tile_size);
 
-    size_t stat_size =
-        sizeOverflowCheck(ITEM_COUNT, sizeof(struct ItemStats));
-    assert((m->stats = malloc(stat_size)));
-    memset(m->stats, 0, stat_size);
+    size_t tile_size;
+    m->tiles = arrMalloc(ITEM_COUNT, sizeof(utf32_t), &tile_size);
 
-    size_t name_size =
-        sizeOverflowCheck(ITEM_COUNT, sizeof(char*));
-    assert((m->names = malloc(name_size)));
-    memset(m->names, 0, name_size);
+    size_t stat_size;
+    m->stats = arrMalloc(ITEM_COUNT, sizeof(struct ItemStats), &stat_size);
+
+    size_t names_size;
+    m->names = arrMalloc(ITEM_COUNT, sizeof(char*), &names_size);
 
     return m;
 }

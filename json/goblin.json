@@ -1,0 +1,7 @@
+{
+  "name": "Goblin",
+  "atk": 12,
+  "def": 8,
+  "tile": "g",
+  "hp": 30
+}
