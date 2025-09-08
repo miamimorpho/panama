@@ -1,96 +1,46 @@
-#include <stddef.h>
-#include <string.h>
 #include "monster.h"
+#include "entity.h"
 #include "space.h"
-#include "arr.h"
-#include "reader.h"
 
-#define MONSTER_C 128
+#define MONSTER_MAX_C 256
+#define LOOKUP_GRANULARITY 16
 
-struct Monsters *monsterManCreate(void)
-{    
-    struct Monsters *m = malloc(sizeof(struct Monsters));
+int
+monstersCreate(struct Archetype *a)
+{
+	a->max = MONSTER_MAX_C;
+	a->cur = 0;
 
-    m->mobs = mobileArrayCreate(MONSTER_C, MONSTERS);
+	a->space = spaceCreate(LOOKUP_GRANULARITY, MONSTER_MAX_C);
 
-    size_t tile_size;
-    m->tiles = 
-        arrMalloc(MONSTER_C, sizeof(utf32_t), &tile_size);
+	COMPONENT_ADD(a, names, MONSTER_MAX_C);
+	COMPONENT_ADD(a, tiles, MONSTER_MAX_C);
+	COMPONENT_ADD(a, container_host, MONSTER_MAX_C);
+	COMPONENT_ADD(a, container_arr, MONSTER_MAX_C);
+	COMPONENT_ADD(a, atk, MONSTER_MAX_C);
+	COMPONENT_ADD(a, def, MONSTER_MAX_C);
+	COMPONENT_ADD(a, hp, MONSTER_MAX_C);
 
-    size_t names_size;
-    m->names =
-        arrMalloc(MONSTER_C, sizeof(char*), &names_size);
-
-    size_t stats_size;
-    m->stats =
-        arrMalloc(MONSTER_C, sizeof(struct MonsterSheet), &stats_size);
-
-    return m;
+	return 0;
 }
 
-int monsterJSONRead(struct Monsters *m, const char* filename, Monster i)
-{ 
-    cJSON *root = readJson(filename);
-    if (!root) return 1;
+/*
+int
+monsterPickupItem(struct Dungeon *d, MonsterID in)
+{
+	struct Monsters *m = d->monsters;
+	Handle *h = m->inventory[in.id];
+	struct Items *items = d->items;
 
-    size_t len = 0;
-    readJsonCopyString(root, "name", NULL, &len);
-    m->names[i] = calloc(len, sizeof(char));
-    readJsonCopyString(root, "name", &m->names[i], &len);
-    // tile
-    readJsonCopyChar(root, "tile", &m->tiles[i]);
+	ItemID item;
+	vec16 target; monsterWhere(m, in, target);
+	if (spaceGet(items->lookup, target, &item.id))
+		return 1;
 
-    readJsonCopyInt(root, "atk", &m->stats[i].atk);
-    readJsonCopyInt(root, "def", &m->stats[i].def);
-    readJsonCopyInt(root, "hp", &m->stats[i].hp);
+	//mobileMoveInto(d->space, &d->items->mobs, item, mob, h);
+	Handle monster = { MONSTERS, in.id };
+	d->vtables[ITEMS].move_inventory(d, monster, monster);
 
-    cJSON_Delete(root);
-    return 0;
+	return 0;
 }
-
-int monsterCreate(struct Dungeon *d, vec16 where, Monster *out){
-    return mobileCreate(d->space, &d->monsters->mobs, where, out);
-}
-
-int monsterMove(struct Dungeon *d, Monster mon, vec16 next, Monster *dst){
-    
-    Monster tmp;
-    if(!mobileGet(d->space, &d->monsters->mobs, next, &tmp)){
-        if(dst)
-            *dst = tmp;
-        return 1;
-    }
-
-    mobileMove(d->space, &d->monsters->mobs, mon, next);
-    return 0;
-}
-
-void monsterUpdateHealth(struct Monsters *mons, Monster i){
-    if(mons->stats[i].hp <= 0){
-        mons->tiles[i] = 'x';
-    }
-}
-
-int monsterAttack(struct Dungeon *d, Monster atk_idx, Monster def_idx){
-
-    struct MonsterSheet *atk, *def;
-    atk = &d->monsters->stats[atk_idx];
-    def = &d->monsters->stats[def_idx];
-
-    def->hp -= atk->atk;
-    monsterUpdateHealth(d->monsters, def_idx); 
-
-    return 0;
-}
-
-int monsterWhere(struct Dungeon *d, Monster n, vec16 out){
-    if(n >= d->monsters->mobs.c) return 1;
-    vec16Copy(d->monsters->mobs.root[n].pos, out);
-    return 0;
-}
-
-utf32_t *
-monsterTile(struct Dungeon *d, Monster n){
-    if(n >= d->monsters->mobs.c) return NULL;
-    return &d->monsters->tiles[n];
-}
+*/

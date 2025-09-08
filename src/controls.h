@@ -1,4 +1,3 @@
-#include "monster.h"
+#include "dungeon.h"
 
-int userInput(struct Dungeon *, Monster);
-
+int userInput(struct Dungeon *, Handle);

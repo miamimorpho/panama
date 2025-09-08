@@ -7,28 +7,30 @@
 #include <stdlib.h>
 #include <string.h>
 
-static inline size_t arrOverflowCheck(size_t nmemb, size_t stride)
+static inline size_t
+arrOverflowCheck(size_t nmemb, size_t stride)
 {
-    if(stride == 0 || nmemb == 0)
-        return 0;
-   
-    if(nmemb > SIZE_MAX / stride)
-        return 0;
+	if (stride == 0 || nmemb == 0)
+		return 0;
 
-    return nmemb * stride;
+	assert(nmemb < SIZE_MAX / stride);
+
+	return nmemb * stride;
 }
 
-static inline void* arrMalloc(size_t nmemb, size_t stride, size_t *out){
-    
-    if(!(*out = arrOverflowCheck(nmemb, stride)))
-        return NULL;
+static inline void *
+arrMalloc(size_t nmemb, size_t stride, size_t *out)
+{
 
-    void *ptr;
-    if(!(ptr = malloc(*out)))
-        return NULL;
+	if (!(*out = arrOverflowCheck(nmemb, stride)))
+		return NULL;
 
-    memset(ptr, 0, *out);
-    return ptr;
+	void *ptr;
+	if (!(ptr = malloc(*out)))
+		return NULL;
+
+	memset(ptr, 0, *out);
+	return ptr;
 }
 
 #endif // ARR_H

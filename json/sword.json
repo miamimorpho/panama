@@ -1,0 +1,6 @@
+{
+  "name": "Sword",
+  "atk": 12,
+  "def": 8,
+  "tile": "!"
+}

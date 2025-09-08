@@ -5,11 +5,11 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-#define BITFIELD_EXTRACT(value, offset, bits) \
-    (((unsigned)(value) >> (offset)) & ((1U << (bits)) - 1U))
-#define BITFIELD_INSERT(base, insert, offset, bits) \
-    (((unsigned)(base) & ~(((1U << (bits)) - 1U) << (offset))) | \
-     ((((unsigned)(insert)) & ((1U << (bits)) - 1U)) << (offset)))
+#define BITFIELD_EXTRACT(value, offset, bits)                                  \
+	(((unsigned) (value) >> (offset)) & ((1U << (bits)) - 1U))
+#define BITFIELD_INSERT(base, insert, offset, bits)                            \
+	(((unsigned) (base) & ~(((1U << (bits)) - 1U) << (offset))) |              \
+	 ((((unsigned) (insert)) & ((1U << (bits)) - 1U)) << (offset)))
 
 typedef struct Bitmap Bitmap;
 

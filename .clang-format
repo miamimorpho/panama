@@ -1,0 +1,33 @@
+# OpenBSD KNF-inspired style with 4-space tabs
+BasedOnStyle: LLVM
+
+# Tab configuration
+UseTab: Always
+TabWidth: 4
+IndentWidth: 4
+
+# Line length (traditional KNF uses 80)
+ColumnLimit: 80
+
+# Brace style - K&R mixed (functions on new line, control structures same line)
+BreakBeforeBraces: Linux
+
+# Function formatting
+AllowShortFunctionsOnASingleLine: None
+AlwaysBreakAfterReturnType: TopLevelDefinitions
+
+# Spacing rules
+SpaceBeforeParens: ControlStatements
+SpacesInParentheses: false
+SpaceAfterCStyleCast: true
+SpaceBeforeAssignmentOperators: true
+
+# Alignment
+AlignConsecutiveDeclarations: false
+AlignTrailingComments: true
+
+# Pointer alignment
+PointerAlignment: Right
+
+# Keep includes simple
+SortIncludes: false

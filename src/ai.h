@@ -1,3 +1,3 @@
-#include "monster.h"
+#include "dungeon.h"
 
-void monsterAI(struct Dungeon *d, Monster m, Monster pla);
+void monsterAI(struct Dungeon *d, Handle, Handle);
