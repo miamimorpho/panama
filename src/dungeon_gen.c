@@ -8,8 +8,8 @@
 #define WFC_USE_STB
 #include "../extern/wfc.h"
 
-#include "dungeon.h"
-#include "terminal.h"
+#include "entity.h"
+#include "terminal_types.h"
 #include "terra.h"
 
 void

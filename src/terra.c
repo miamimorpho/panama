@@ -4,7 +4,6 @@
 #include "space.h"
 #include "maths.h"
 #include "bitmap.h"
-#include "arr.h"
 
 #define CHUNK_C 128
 #define CHUNK_LENGTH 16
@@ -32,16 +31,17 @@ terrainCreate(void)
 	tm->cur = 0;
 
 	tm->lookup = spaceCreate(LOOKUP_GRANULARITY, CHUNK_C);
-	size_t chunk_arr_sz = arrOverflowCheck(CHUNK_C, sizeof(struct TerraChunk));
-	tm->chunk = malloc(chunk_arr_sz);
+	tm->chunk = calloc(CHUNK_C, sizeof(struct TerraChunk));
 
-	size_t tiles_sz =
-		arrOverflowCheck(CHUNK_LENGTH * CHUNK_LENGTH, sizeof(struct TermTile));
 	for (int i = 0; i < CHUNK_C; i++) {
 		struct TerraChunk *chunk = &tm->chunk[i];
 		chunk->solid = bitmapCreate(CHUNK_LENGTH, CHUNK_LENGTH);
 		chunk->opaque = bitmapCreate(CHUNK_LENGTH, CHUNK_LENGTH);
-		chunk->tile = malloc(tiles_sz);
+		chunk->tile =
+			calloc(CHUNK_LENGTH * CHUNK_LENGTH, sizeof(struct TermTile));
+		for (int t = 0; t < CHUNK_LENGTH * CHUNK_LENGTH; t++) {
+			chunk->tile[t].utf = utf8Char(" ");
+		}
 	}
 
 	return tm;
@@ -152,7 +152,7 @@ terraGetTile(struct TerraPos p)
 	static struct TermTile tile = {0};
 
 	if (!p.chunk) {
-		tile.utf = utf8Char(" ");
+		tile.utf = utf8Char("X");
 		return tile;
 	}
 	return p.chunk->tile[p.pos[1] * CHUNK_LENGTH + p.pos[0]];

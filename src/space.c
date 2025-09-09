@@ -1,5 +1,4 @@
 #include "maths.h"
-#include "arr.h"
 #include "plist.h"
 #include "space.h"
 
@@ -25,15 +24,12 @@ spaceCreate(int len, int c)
 	s->gran = len;
 	s->c = c;
 
-	size_t hash_sz = arrOverflowCheck(c, sizeof(struct SpaceHead));
-	s->hash = malloc(hash_sz);
+	s->hash = calloc(c, sizeof(struct SpaceHead));
 	for (size_t i = 0; i < s->c; i++) {
 		PLIST_INIT(&s->hash[i]);
 	}
 
-	size_t elms_sz = arrOverflowCheck(c, sizeof(struct SpaceElm));
-	s->elms = malloc(elms_sz);
-	memset(s->elms, 0, elms_sz);
+	s->elms = calloc(c, sizeof(struct SpaceElm));
 
 	return s;
 }

@@ -3,6 +3,4 @@
 
 #include "dungeon.h"
 
-int monstersCreate(struct Archetype *);
-
 #endif // MONSTER_H

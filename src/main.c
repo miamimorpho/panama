@@ -1,7 +1,6 @@
 
 #include "terminal.h"
 #include "controls.h"
-#include "items.h"
 #include "ai.h"
 #include "render.h"
 
@@ -23,17 +22,17 @@ main(void)
 	entityJson(d.entt, "goblin", goblin);
 
 	Handle sword;
-	entityCreate(d.entt, ARCHETYPE_MONSTER, (vec16) {6, 6}, &sword);
+	entityCreate(d.entt, ARCHETYPE_ITEM, (vec16) {6, 6}, &sword);
 	entityJson(d.entt, "sword", sword);
 
 	while (1) {
+		termClear();
 		vec16 player_pos;
 		entityWhere(d.entt, player, player_pos);
 		drawDungeon(&d, player_pos);
-		// struct TermUI ui = {0, 0};
-		// termPuts(&ui, "hero");
-		termRefresh();
-		userInput(&d, player);
+		termFlush();
+		if (userInput(&d, player))
+			continue;
 		monsterAI(&d, goblin, player);
 	}
 }

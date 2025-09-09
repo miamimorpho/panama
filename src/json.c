@@ -39,7 +39,7 @@ readJsonCopyInt(cJSON *root, const char *key, int *array, size_t index)
 }
 
 int
-readJsonCopyUint32(cJSON *root, const char *key, uint32_t *array, size_t index)
+readJsonCopyUint32(cJSON *root, const char *key, int32_t *array, size_t index)
 {
 	if (!array)
 		return 0; // Skip if array is NULL
@@ -53,7 +53,7 @@ readJsonCopyUint32(cJSON *root, const char *key, uint32_t *array, size_t index)
 	if (item->valueint < 0)
 		return 1; // Negative values invalid for uint32_t
 
-	array[index] = (uint32_t) item->valueint;
+	array[index] = (int32_t) item->valueint;
 	return 0;
 }
 

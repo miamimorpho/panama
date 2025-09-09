@@ -1,28 +1,26 @@
-// #include "menu.h"
-// #include "terminal.h"
+#include "menu.h"
+#include "terminal.h"
 
-/*
-void
-menuInventory(struct Dungeon *d, struct HandleTyped *inventory)
+int
+menuInventory(struct Dungeon *d, struct Inventory *inven)
 {
 	struct TermUI ui = {0, 0};
 	int alpha_i = 0;
-	struct Mobile *mob;
-	PLIST_FOREACH(d->items->mobs.root, inventory, mob, link)
+	Handle *cur;
+	VECTOR_EACH(inven, cur)
 	{
-		size_t i = mob - d->items->mobs.root;
 		unsigned char alphabet = 'a' + alpha_i;
 		termPut(&ui, utf8Code(alphabet));
 		alpha_i++;
-		termPuts(&ui, d->items->names[i]);
+		termPuts(&ui, d->entt[cur->type].names[cur->id]);
 		if (alpha_i >= 52)
 			break;
 	}
 	ui.x = 0;
 	ui.y++;
 	termPuts(&ui, "PRESS ANY");
-	termRefresh();
+	termFlush();
 	termGet();
-}
 
-*/
+	return 1;
+}

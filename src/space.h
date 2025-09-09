@@ -2,7 +2,7 @@
 #define SPACE_H
 
 #include "ivec16.h"
-#include "entity.h"
+#include "handle.h"
 
 struct Space;
 

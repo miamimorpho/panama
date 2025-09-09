@@ -9,6 +9,8 @@ userInput(struct Dungeon *d, Handle pla)
 	entityWhere(d->entt, pla, start);
 	vec16Copy(start, next);
 
+	Handle gettee = {0};
+
 	switch (termGet()) {
 	case T_KEY_UP:
 		vec16Copy(VEC16_NORTH(start), next);
@@ -23,21 +25,25 @@ userInput(struct Dungeon *d, Handle pla)
 		vec16Copy(VEC16_EAST(start), next);
 		break;
 	case 'g':
-		// monsterPickupItem(d, pla);
+		gettee = entityGet(d->entt, ARCHETYPE_ITEM, start);
+		entityPickUp(d->entt, pla, gettee);
+		return 0;
 		break;
-	// case 'i':
-	//	menuInventory(d, d->monsters->inventory[pla.id]);
-	//	break;
+	case 'i':
+		return menuInventory(d, &d->entt[pla.type].inventory[pla.id]);
+		break;
 	default:
 		return 1;
 	}
 
-	HandleID hit;
-	if (0 == entityGet(d->entt, ARCHETYPE_MONSTER, next, &hit)) {
-		// monster hit
+	Handle hit = entityGet(d->entt, ARCHETYPE_MONSTER, next);
+	if (hit.type == ARCHETYPE_MONSTER) {
+
+		entityAttack(d->entt, pla, hit);
+		return 0;
 	}
 
-	entityMove(d->entt, pla, next);
+	entityMove(d, pla, next);
 
 	return 0;
 }

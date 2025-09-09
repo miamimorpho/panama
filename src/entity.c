@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <string.h>
 
+#include "terra.h"
 #include "entity.h"
 #include "space.h"
 #include "json.h"
@@ -68,16 +69,21 @@ entityIsDead(Entities all_types, Handle in)
 	struct Archetype *type = &all_types[in.type];
 	if (!type->hp)
 		return 1;
-	return (type->hp[in.id] < 0);
+	return (type->hp[in.id] <= 0);
 }
 
-int
-entityGet(Entities all_types, ArchetypeEnum type, vec16 in, HandleID *out)
+Handle
+entityGet(Entities all_types, ArchetypeEnum type, vec16 in)
 {
+	Handle out = {0};
 	struct Archetype *a = &all_types[type];
 	if (!a->space)
-		return 1;
-	return spaceGet(a->space, out, in);
+		return out;
+	HandleID id;
+	if (spaceGet(a->space, &id, in)) {
+		return out;
+	}
+	return (Handle) {type, id};
 }
 
 int
@@ -90,38 +96,56 @@ entityWhere(Entities all_types, Handle in, vec16 out)
 }
 
 void
-entityMove(Entities all_types, Handle in, vec16 delta)
+entityMove(struct Dungeon *d, Handle in, vec16 delta)
 {
-	struct Archetype *type = &all_types[in.type];
+	struct Archetype *type = &d->entt[in.type];
 	if (!type->space)
 		return;
+
+	struct TerraPos tp = terraPos(d->terrain, delta);
+	if (terraGetSolid(tp))
+		return;
+
+	HandleID hit;
+	if (0 == spaceGet(type->space, &hit, delta)) {
+		return;
+	}
+
 	spaceMove(type->space, in.id, delta);
+}
+
+int
+entityPickUp(Entities all_types, Handle grabber, Handle item)
+{
+	struct Archetype *gra_t = &all_types[grabber.type];
+	struct Archetype *itm_t = &all_types[item.type];
+
+	if (!itm_t->inventory_host)
+		return 1;
+	if (!gra_t->inventory)
+		return 1;
+
+	spaceRemove(itm_t->space, item.id);
+	itm_t->inventory_host[item.id] = grabber;
+	VECTOR_PUSH(&gra_t->inventory[grabber.id], item);
+
+	return 0;
 }
 
 int
 entityAttack(Entities all_types, Handle atk, Handle def)
 {
+
 	struct Archetype *atk_type = &all_types[atk.type];
 	struct Archetype *def_type = &all_types[def.type];
 
-	def_type->hp[def.id] -= atk_type->atk[atk.id];
+	int result = atk_type->atk[atk.id];
+	def_type->hp[def.id] -= result;
 
 	if (def_type->hp[def.id] <= 0) {
+
 		def_type->tiles[def.id].utf = utf8Char("X");
 	}
 
 	return 0;
 }
-
-/*
-HandleID
-entityRangeStart(Entities all_types, ArchetypeEnum type,
-		struct SpaceFinder* f, vec16 o, uint32_t r){
-	struct Archetype *a = &all_types[type];
-	return spaceFindStart(a->space, f, o, r);
-}
-
-HandleID
-entityRangeNext(Entities all_types, ArchetypeEnum type,
-HandleID spaceFindNext(struct SpaceFinder *f, HandleID);
-*/

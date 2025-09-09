@@ -1,3 +1,4 @@
 #include "dungeon.h"
+#include "entity.h"
 
-void menuInventory(struct Dungeon *, Handle *);
+int menuInventory(struct Dungeon *, struct Inventory *);

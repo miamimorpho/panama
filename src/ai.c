@@ -18,6 +18,6 @@ monsterAI(struct Dungeon *d, Handle m, Handle pla)
 	aStarBuildPath(aa, NULL, &path_len);
 	aStarBuildPath(aa, path, &path_len);
 	if (path_len) {
-		entityMove(d->entt, m, path[path_len - 1]);
+		entityMove(d, m, path[path_len - 1]);
 	}
 }

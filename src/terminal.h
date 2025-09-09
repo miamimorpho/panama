@@ -23,7 +23,8 @@ enum termInputCodes {
 };
 
 void termInit(void);
-void termRefresh(void);
+void termSwap(void);
+void termFlush(void);
 void termPut(struct TermUI *ui, utf8_ch);
 void termPuts(struct TermUI *ui, utf8_str);
 void termClear(void);

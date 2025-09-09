@@ -5,7 +5,7 @@
 
 int readJsonCopyChar(cJSON *, const char *, struct TermTile *, size_t);
 int readJsonCopyInt(cJSON *root, const char *key, int *array, size_t index);
-int readJsonCopyUint32(cJSON *root, const char *key, uint32_t *array,
+int readJsonCopyUint32(cJSON *root, const char *key, int32_t *array,
 					   size_t index);
 int readJsonCopyString(cJSON *root, const char *key, char **array,
 					   size_t index);

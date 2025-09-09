@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "astar.h"
+#include "entity.h"
 #include "terra.h"
 #include "maths.h"
 

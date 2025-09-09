@@ -1,4 +1,5 @@
 #include "fov.h"
+#include "entity.h"
 
 enum Cardinal {
 	NORTH = 0,
