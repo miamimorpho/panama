@@ -10,6 +10,7 @@
 #include <locale.h>
 
 #include "terminal.h"
+//#include "maths.h"
 
 #define TERMINAL_DEF_WID 80
 #define TERMINAL_DEF_HEI 24
@@ -41,6 +42,32 @@ static struct Term *TERM;
 
 #define NEXT_FRAME ((TERM->frame + 1) % 2)
 
+struct TermUI
+termRoot(void){
+    return (struct TermUI){
+        0, 0,
+        TERM->width, TERM->height,
+        0, 0,
+    };
+}
+
+struct TermUI
+termWin(struct TermUI cur, 
+        int width, 
+        int height, 
+        int margin_left, 
+        int margin_top){
+
+    return (struct TermUI){
+        cur.margin_top + margin_top + cur.y,
+        cur.margin_left + margin_left + cur.x,
+        width,
+        height,
+        cur.x,
+        cur.y,
+    };
+}
+
 static inline struct TermTile *
 fbGet(int frame, uint16_t x, uint16_t y)
 {
@@ -57,24 +84,33 @@ fbCompare(uint16_t x, uint16_t y)
 }
 
 void
-termPut(struct TermUI *ui, utf8_ch ch)
+termMove(struct TermUI *ui, int dx, int dy)
 {
-	if (ui->y < 0 || ui->y >= TERM->height)
-		return;
+    ui->x = dx;
+    ui->y = dy;
 
-	if (ui->x >= TERM->width) {
-		ui->y += ui->x / TERM->width;
-		ui->x %= TERM->width; // use modulo instead of resetting to 0
+	if (ui->x >= ui->width) {
+		ui->y += ui->x / ui->width;
+		ui->x %= ui->width;
 		if (ui->y >= TERM->height)
 			return; // check after adjustment
 	}
+}
 
-	if (ui->x < 0)
-		return;
 
-	fbGet(TERM->frame, ui->x, ui->y)->utf = ch;
+void
+termPut(struct TermUI *ui, utf8_ch ch)
+{
 
-	ui->x++;
+    if (ui->x < 0 || ui->y < 0) return;
+    if(ui->x >= TERM->width) return;
+
+    //if(utf8Equal(ch, UTF8_NULL))
+    //    ch = utf8Char(" ");
+
+	fbGet(TERM->frame, ui->x + ui->margin_left, 
+            ui->y + ui->margin_top)->utf = ch;
+    termMove(ui, ui->x + 1, ui->y);
 }
 
 void
@@ -140,7 +176,7 @@ termGet(void)
 static void
 clear(int frame)
 {
-	struct TermTile *start = TERM->fb + (frame * FRAMEBUFFER_SIZE);
+    struct TermTile *start = TERM->fb + (frame * FRAMEBUFFER_SIZE);
 	memset(start, 0, FRAMEBUFFER_SIZE);
 }
 

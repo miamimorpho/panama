@@ -12,8 +12,9 @@ void
 fovDrawFn(struct FovEffect *p, struct TerraPos ter, vec16 in)
 {
 	struct FovDrawCtx *ctx = (struct FovDrawCtx *) p->ctx;
-	struct TermUI ui = {.x = in[0] - ctx->offset[0],
-						.y = in[1] - ctx->offset[1]};
+    struct TermUI ui = termRoot();
+	
+    termMove(&ui, in[0] - ctx->offset[0], in[1] - ctx->offset[1]);
 	termPut(&ui, terraGetTile(ter).utf);
 }
 
@@ -27,17 +28,21 @@ drawDungeon(struct Dungeon *d, vec16 o)
 	uint16_t w, h;
 	termSize(&w, &h);
 
+    struct TermUI ui = termRoot();
+
 	int32_t cam_x = o[0] - (uint32_t) (w / 2);
 	int32_t cam_y = o[1] - (uint32_t) (h / 2);
 
+    
 	for (int y = 0; y < h; y++) {
 		for (int x = 0; x < w; x++) {
 			struct TerraPos pos =
 				terraPos(d->terrain, (vec16) {cam_x + x, cam_y + y});
-			struct TermUI ui2 = {x, y};
-			termPut(&ui2, terraGetTile(pos).utf);
+			termMove(&ui, x, y);
+            termPut(&ui, terraGetTile(pos).utf);
 		}
 	}
+    
 	struct FovDrawCtx ctx;
 	vec16Copy((vec16) {cam_x, cam_y}, ctx.offset);
 
@@ -54,11 +59,7 @@ drawDungeon(struct Dungeon *d, vec16 o)
 	{
 		vec16 pos;
 		spaceWhere(d->entt[ARCHETYPE_ITEM].space, item, pos);
-		struct TermUI ui = {
-			pos[0] - cam_x,
-			pos[1] - cam_y,
-
-		};
+        termMove(&ui, pos[0] - cam_x, pos[1] - cam_y);
 		termPut(&ui, d->entt[ARCHETYPE_ITEM].tiles[item].utf);
 	}
 
@@ -68,11 +69,7 @@ drawDungeon(struct Dungeon *d, vec16 o)
 	{
 		vec16 pos;
 		spaceWhere(d->entt[ARCHETYPE_MONSTER].space, monster, pos);
-		struct TermUI ui = {
-			pos[0] - cam_x,
-			pos[1] - cam_y,
-
-		};
+        termMove(&ui, pos[0] - cam_x, pos[1] - cam_y);
 		termPut(&ui, d->entt[ARCHETYPE_MONSTER].tiles[monster].utf);
 	}
 

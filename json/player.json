@@ -1,7 +1,13 @@
 {
   "name": "Player",
-  "atk": 12,
-  "def": 8,
+
   "tile": "@",
-  "hp": 100
+  "hp": 100,
+
+  "str": 5,
+  "con": 5, 
+  "per": 5,
+  "dex": 5, 
+  "wis": 5,
+  "cha": 5
 }

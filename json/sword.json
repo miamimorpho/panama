@@ -1,6 +1,8 @@
 {
   "name": "Sword",
-  "atk": 12,
-  "def": 8,
+  "bonus": 5,
+  "range": 0,
+  "defence": "fortitude",
+  "damage": 4,
   "tile": "!"
 }

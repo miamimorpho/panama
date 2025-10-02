@@ -1,7 +1,13 @@
 {
   "name": "Goblin",
-  "atk": 12,
-  "def": 8,
+
   "tile": "g",
-  "hp": 30
+  "hp": 20,
+
+  "str": 4,
+  "con": 3, 
+  "per": 5,
+  "dex": 5, 
+  "wis": 5,
+  "cha": 1
 }

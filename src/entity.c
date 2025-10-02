@@ -5,6 +5,7 @@
 #include "entity.h"
 #include "space.h"
 #include "json.h"
+#include <math.h>
 
 static inline size_t
 componentOverflow(size_t nmemb, size_t stride)
@@ -53,13 +54,37 @@ entityJson(Entities all_types, const char *filename, Handle han)
 
 	struct Archetype *a = &all_types[han.type];
 
+    // MetaData
 	readJsonCopyString(json, "name", a->names, han.id);
 	readJsonCopyChar(json, "tile", a->tiles, han.id);
-	readJsonCopyUint32(json, "atk", a->atk, han.id);
-	readJsonCopyUint32(json, "hp", a->hp, han.id);
-	readJsonCopyUint32(json, "def", a->def, han.id);
-
-	cJSON_Delete(json);
+	readJsonCopyInt(json, "hp", a->hp, han.id);
+	
+    // Actor Stats
+	readJsonCopyUint32(json, "str", a->str, han.id);
+    readJsonCopyUint32(json, "con", a->con, han.id);
+    readJsonCopyUint32(json, "per", a->per, han.id);
+    readJsonCopyUint32(json, "dex", a->dex, han.id);
+    readJsonCopyUint32(json, "wis", a->wis, han.id);
+  
+    // Weapon Stats
+    readJsonCopyUint32(json, "bonus", a->bonus, han.id);
+    readJsonCopyUint32(json, "range", a->range, han.id);
+    readJsonCopyUint32(json, "damage", a->damage, han.id);
+    char *defence = NULL;
+    jsonPeakString(json, "defence", &defence);
+    if(defence){
+        if(strncmp(defence, "fortitude", strlen("fortitude")))
+            a->def_type[han.id] = DEF_FORTITUDE;
+    
+        if(strncmp(defence, "will", strlen("will")))
+            a->def_type[han.id] = DEF_WILL;
+    
+        if(strncmp(defence, "reflex", strlen("reflex")))
+            a->def_type[han.id] = DEF_REFLEX;
+   
+        free(defence);
+    }
+    cJSON_Delete(json);
 	return 0;
 }
 
@@ -124,6 +149,8 @@ entityPickUp(Entities all_types, Handle grabber, Handle item)
 		return 1;
 	if (!gra_t->inventory)
 		return 1;
+    if (!item.type)
+        return 1;
 
 	spaceRemove(itm_t->space, item.id);
 	itm_t->inventory_host[item.id] = grabber;
@@ -139,8 +166,11 @@ entityAttack(Entities all_types, Handle atk, Handle def)
 	struct Archetype *atk_type = &all_types[atk.type];
 	struct Archetype *def_type = &all_types[def.type];
 
-	int result = atk_type->atk[atk.id];
-	def_type->hp[def.id] -= result;
+	int atk_score = atk_type->str[atk.id];
+    int fortitude = 
+        fmax(def_type->str[def.id], def_type->con[def.id]);
+
+    // todo add AC/weapons
 
 	if (def_type->hp[def.id] <= 0) {
 

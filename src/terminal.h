@@ -4,6 +4,10 @@
 #include "terminal_types.h"
 
 struct TermUI {
+    int32_t margin_top;
+    int32_t margin_left;
+    int32_t width;
+    int32_t height;
 	int32_t x;
 	int32_t y;
 };
@@ -25,8 +29,13 @@ enum termInputCodes {
 void termInit(void);
 void termSwap(void);
 void termFlush(void);
-void termPut(struct TermUI *ui, utf8_ch);
-void termPuts(struct TermUI *ui, utf8_str);
+
+struct TermUI termRoot(void);
+struct TermUI termWin(struct TermUI, int, int, int, int);
+
+void termMove(struct TermUI *, int, int);
+void termPut(struct TermUI *, utf8_ch);
+void termPuts(struct TermUI *, utf8_str);
 void termClear(void);
 void termSize(uint16_t *, uint16_t *);
 int64_t termGet(void);

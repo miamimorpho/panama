@@ -39,7 +39,7 @@ readJsonCopyInt(cJSON *root, const char *key, int *array, size_t index)
 }
 
 int
-readJsonCopyUint32(cJSON *root, const char *key, int32_t *array, size_t index)
+readJsonCopyUint32(cJSON *root, const char *key, uint32_t *array, size_t index)
 {
 	if (!array)
 		return 0; // Skip if array is NULL
@@ -58,8 +58,7 @@ readJsonCopyUint32(cJSON *root, const char *key, int32_t *array, size_t index)
 }
 
 int
-readJsonCopyString(cJSON *root, const char *key, char **array, size_t index)
-{
+jsonPeakString(cJSON *root, const char *key, char **array){
 	if (!array)
 		return 0; // Skip if array is NULL
 	if (!root || !key)
@@ -71,12 +70,19 @@ readJsonCopyString(cJSON *root, const char *key, char **array, size_t index)
 	}
 
 	size_t len = strlen(elm->valuestring) + 1;
-	array[index] = calloc(len, sizeof(char));
-	if (!array[index])
+	*array = calloc(len, sizeof(char));
+	if (!*array)
 		return 1; // Memory allocation failed
 
-	memcpy(array[index], elm->valuestring, len);
+	memcpy(*array, elm->valuestring, len);
 	return 0;
+
+}
+
+int
+readJsonCopyString(cJSON *root, const char *key, char **array, size_t index)
+{
+    return jsonPeakString(root, key, &array[index]);
 }
 
 cJSON *

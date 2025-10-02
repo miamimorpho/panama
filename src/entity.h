@@ -9,6 +9,13 @@
 
 VECTOR(Inventory, Handle);
 
+enum DefenceType{
+    DEF_NONE = 0,
+    DEF_FORTITUDE,
+    DEF_WILL,
+    DEF_REFLEX
+};
+
 struct Archetype {
 
 	// Memory Management
@@ -23,10 +30,25 @@ struct Archetype {
 	struct Inventory *inventory;
 	Handle *inventory_host;
 
-	// Stats
+	// Actor Stats
 	int32_t *hp;
-	uint32_t *atk;
-	uint32_t *def;
+
+	uint32_t *str;
+	uint32_t *con;
+    uint32_t *dex;
+    uint32_t *per;
+    uint32_t *wis;
+    uint32_t *cha;
+
+    // Body
+    // equip slots
+
+    // Weapons Stats
+    uint32_t *bonus;
+    uint32_t *range;
+    uint32_t *damage;
+    enum DefenceType *def_type;
+
 };
 typedef struct Archetype Entities[ARCHETYPE_MAX_C];
 

@@ -5,6 +5,9 @@
 #include <stddef.h>
 #include <assert.h>
 
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+
 /*
  * https://nullprogram.com/blog/2018/07/31/
  * 32bit hash version 1

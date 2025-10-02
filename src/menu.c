@@ -4,7 +4,8 @@
 int
 menuInventory(struct Dungeon *d, struct Inventory *inven)
 {
-	struct TermUI ui = {0, 0};
+	struct TermUI ui = termRoot();
+    ui = termWin(ui, 16, 16, 5, 5);
 	int alpha_i = 0;
 	Handle *cur;
 	VECTOR_EACH(inven, cur)
