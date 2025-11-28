@@ -33,7 +33,14 @@ drawDungeon(struct Dungeon *d, vec16 o)
 	int32_t cam_x = o[0] - (uint32_t) (w / 2);
 	int32_t cam_y = o[1] - (uint32_t) (h / 2);
 
-    
+
+    for(int y = 0; y < h; y++){
+        for(int x = 0; x < w; x++){
+            termMove(&ui, x, y);
+            termPut(&ui, UTF8_NULL);
+        }
+    }
+/*    
 	for (int y = 0; y < h; y++) {
 		for (int x = 0; x < w; x++) {
 			struct TerraPos pos =
@@ -42,7 +49,8 @@ drawDungeon(struct Dungeon *d, vec16 o)
             termPut(&ui, terraGetTile(pos).utf);
 		}
 	}
-    
+*/
+
 	struct FovDrawCtx ctx;
 	vec16Copy((vec16) {cam_x, cam_y}, ctx.offset);
 

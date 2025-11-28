@@ -1,5 +1,7 @@
 
 TODO
 
-add attacking
-add picking up items in inventory
+fix resizing
+add colours to FOV
+add attacking back in
+

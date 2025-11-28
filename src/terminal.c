@@ -194,7 +194,8 @@ resize(void)
 	TERM->width = ws.ws_col;
 	TERM->height = ws.ws_row;
 	SAY(ESCA CLEARTERM);
-
+    termClear();
+    //clear(1);
 	TERM->resize = 0;
 }
 

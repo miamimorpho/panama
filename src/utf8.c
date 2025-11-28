@@ -70,10 +70,10 @@ utf8ChSize(utf8_str s)
 void
 utf8Put(utf8_ch ch)
 {
-    //if(utf8Equal(ch, UTF8_NULL)){
-    //    write(STDOUT_FILENO, " ", 1);
-    //    return;
-    //}
+    if(utf8Equal(ch, UTF8_NULL)){
+        write(STDOUT_FILENO, " ", 1);
+        return;
+    }
 
 	int len = utf8ChSize(ch.bytes);
 	write(STDOUT_FILENO, ch.bytes, len);

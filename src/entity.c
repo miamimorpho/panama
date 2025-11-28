@@ -160,21 +160,20 @@ entityPickUp(Entities all_types, Handle grabber, Handle item)
 }
 
 int
-entityAttack(Entities all_types, Handle atk, Handle def)
+entityAttack(Entities entts, Handle atk, Handle def)
 {
 
-	struct Archetype *atk_type = &all_types[atk.type];
-	struct Archetype *def_type = &all_types[def.type];
+	struct Archetype *atk_entt = &entts[atk.type];
+	struct Archetype *def_entt = &entts[def.type];
 
-	int atk_score = atk_type->str[atk.id];
-    int fortitude = 
-        fmax(def_type->str[def.id], def_type->con[def.id]);
-
+	int atk_score = atk_entt->str[atk.id];
+    def_entt->hp[def.id] -= atk_score;
+    //int fortitude = fmax(def_entt->str[def.id], def_type->con[def.id]);
     // todo add AC/weapons
 
-	if (def_type->hp[def.id] <= 0) {
+	if (def_entt->hp[def.id] <= 0) {
 
-		def_type->tiles[def.id].utf = utf8Char("X");
+		def_entt->tiles[def.id].utf = utf8Char("X");
 	}
 
 	return 0;
