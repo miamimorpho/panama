@@ -4,10 +4,10 @@
 #include "terminal_types.h"
 
 struct TermUI {
-    int32_t margin_top;
-    int32_t margin_left;
-    int32_t width;
-    int32_t height;
+	int32_t margin_top;
+	int32_t margin_left;
+	int32_t width;
+	int32_t height;
 	int32_t x;
 	int32_t y;
 };

@@ -141,16 +141,16 @@ scanRow(struct Row cur, struct Dungeon *d, float depth_max,
 }
 
 void
-fov(struct Dungeon *d, vec16 o, struct FovEffect *effect)
+fov(struct Dungeon *d, vec16 camera, struct FovEffect *effect)
 {
-	struct TerraPos ter = terraPos(d->terrain, o);
-	effect->fn(effect, ter, o);
+	struct TerraPos ter = terraPos(d->terrain, camera);
+	effect->fn(effect, ter, camera);
 	struct Row first = {
 		.depth = 1,
 		.start = (Fraction) {-1, 1},
 		.end = (Fraction) {1, 1},
 	};
-	vec16Copy(o, first.camera);
+	vec16Copy(camera, first.camera);
 	for (int dir = 0; dir < 4; dir++) {
 		first.dir = dir;
 		scanRow(first, d, 32, effect);

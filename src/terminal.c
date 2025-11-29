@@ -10,7 +10,7 @@
 #include <locale.h>
 
 #include "terminal.h"
-//#include "maths.h"
+// #include "maths.h"
 
 #define TERMINAL_DEF_WID 80
 #define TERMINAL_DEF_HEI 24
@@ -43,29 +43,26 @@ static struct Term *TERM;
 #define NEXT_FRAME ((TERM->frame + 1) % 2)
 
 struct TermUI
-termRoot(void){
-    return (struct TermUI){
-        0, 0,
-        TERM->width, TERM->height,
-        0, 0,
-    };
+termRoot(void)
+{
+	return (struct TermUI) {
+		0, 0, TERM->width, TERM->height, 0, 0,
+	};
 }
 
 struct TermUI
-termWin(struct TermUI cur, 
-        int width, 
-        int height, 
-        int margin_left, 
-        int margin_top){
+termWin(struct TermUI cur, int width, int height, int margin_left,
+		int margin_top)
+{
 
-    return (struct TermUI){
-        cur.margin_top + margin_top + cur.y,
-        cur.margin_left + margin_left + cur.x,
-        width,
-        height,
-        cur.x,
-        cur.y,
-    };
+	return (struct TermUI) {
+		cur.margin_top + margin_top + cur.y,
+		cur.margin_left + margin_left + cur.x,
+		width,
+		height,
+		cur.x,
+		cur.y,
+	};
 }
 
 static inline struct TermTile *
@@ -86,8 +83,8 @@ fbCompare(uint16_t x, uint16_t y)
 void
 termMove(struct TermUI *ui, int dx, int dy)
 {
-    ui->x = dx;
-    ui->y = dy;
+	ui->x = dx;
+	ui->y = dy;
 
 	if (ui->x >= ui->width) {
 		ui->y += ui->x / ui->width;
@@ -97,20 +94,21 @@ termMove(struct TermUI *ui, int dx, int dy)
 	}
 }
 
-
 void
 termPut(struct TermUI *ui, utf8_ch ch)
 {
 
-    if (ui->x < 0 || ui->y < 0) return;
-    if(ui->x >= TERM->width) return;
+	if (ui->x < 0 || ui->y < 0)
+		return;
+	if (ui->x >= TERM->width)
+		return;
 
-    //if(utf8Equal(ch, UTF8_NULL))
-    //    ch = utf8Char(" ");
+	// if(utf8Equal(ch, UTF8_NULL))
+	//     ch = utf8Char(" ");
 
-	fbGet(TERM->frame, ui->x + ui->margin_left, 
-            ui->y + ui->margin_top)->utf = ch;
-    termMove(ui, ui->x + 1, ui->y);
+	fbGet(TERM->frame, ui->x + ui->margin_left, ui->y + ui->margin_top)->utf =
+		ch;
+	termMove(ui, ui->x + 1, ui->y);
 }
 
 void
@@ -176,7 +174,7 @@ termGet(void)
 static void
 clear(int frame)
 {
-    struct TermTile *start = TERM->fb + (frame * FRAMEBUFFER_SIZE);
+	struct TermTile *start = TERM->fb + (frame * FRAMEBUFFER_SIZE);
 	memset(start, 0, FRAMEBUFFER_SIZE);
 }
 
@@ -194,8 +192,8 @@ resize(void)
 	TERM->width = ws.ws_col;
 	TERM->height = ws.ws_row;
 	SAY(ESCA CLEARTERM);
-    termClear();
-    //clear(1);
+	termClear();
+	// clear(1);
 	TERM->resize = 0;
 }
 

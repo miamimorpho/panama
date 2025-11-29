@@ -22,7 +22,7 @@ monstersCreate(struct Archetype *a)
 	}
 	COMPONENT_ADD(a, hp, MONSTER_MAX_C);
 	COMPONENT_ADD(a, str, MONSTER_MAX_C);
-    COMPONENT_ADD(a, con, MONSTER_MAX_C);
+	COMPONENT_ADD(a, con, MONSTER_MAX_C);
 	COMPONENT_ADD(a, per, MONSTER_MAX_C);
 	COMPONENT_ADD(a, dex, MONSTER_MAX_C);
 	COMPONENT_ADD(a, wis, MONSTER_MAX_C);
@@ -41,13 +41,13 @@ itemsCreate(struct Archetype *a)
 	COMPONENT_ADD(a, names, ITEM_MAX_C);
 	COMPONENT_ADD(a, tiles, ITEM_MAX_C);
 	COMPONENT_ADD(a, inventory_host, ITEM_MAX_C);
-    COMPONENT_ADD(a, hp, ITEM_MAX_C);
+	COMPONENT_ADD(a, hp, ITEM_MAX_C);
 	COMPONENT_ADD(a, bonus, ITEM_MAX_C);
 	COMPONENT_ADD(a, def_type, ITEM_MAX_C);
 	COMPONENT_ADD(a, range, ITEM_MAX_C);
 	COMPONENT_ADD(a, damage, ITEM_MAX_C);
-    
-    return 0;
+
+	return 0;
 }
 
 void

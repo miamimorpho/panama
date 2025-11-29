@@ -58,7 +58,8 @@ readJsonCopyUint32(cJSON *root, const char *key, uint32_t *array, size_t index)
 }
 
 int
-jsonPeakString(cJSON *root, const char *key, char **array){
+jsonPeakString(cJSON *root, const char *key, char **array)
+{
 	if (!array)
 		return 0; // Skip if array is NULL
 	if (!root || !key)
@@ -76,13 +77,12 @@ jsonPeakString(cJSON *root, const char *key, char **array){
 
 	memcpy(*array, elm->valuestring, len);
 	return 0;
-
 }
 
 int
 readJsonCopyString(cJSON *root, const char *key, char **array, size_t index)
 {
-    return jsonPeakString(root, key, &array[index]);
+	return jsonPeakString(root, key, &array[index]);
 }
 
 cJSON *
