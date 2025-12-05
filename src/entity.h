@@ -3,46 +3,46 @@
 
 #include <stdint.h>
 #include "ivec16.h"
-#include "dungeon.h"
 #include "handle.h"
 #include "vector.h"
 
 VECTOR(Inventory, Handle);
 
-enum DefenceType { DEF_NONE = 0, DEF_FORTITUDE, DEF_WILL, DEF_REFLEX };
-
 struct Archetype {
-
+	
 	// Memory Management
 	uint32_t max;
 	uint32_t cur;
 
-	char **names;
-	struct TermTile *tiles;
+	// Components Begin
+	char **name;
+	struct TermTile *tile;
 
-	// Physics
+	// Location
 	struct Space *space;
-	struct Inventory *inventory;
-	Handle *inventory_host;
-
+	struct Inventory *inventory; // if entity stores items, this is an array of
+								 // the Handles of the entities contained.
+	Handle *inventory_host; // if entity is stored within another, this points
+							// to its container entity
+	
 	// Actor Stats
 	int32_t *hp;
 
+	uint8_t alive;
+		
+    // Body
 	uint32_t *str;
 	uint32_t *con;
 	uint32_t *dex;
 	uint32_t *per;
 	uint32_t *wis;
 	uint32_t *cha;
-
-	// Body
-	// equip slots
-
+	
 	// Weapons Stats
-	uint32_t *bonus;
+	uint32_t *attack;
 	uint32_t *range;
 	uint32_t *damage;
-	enum DefenceType *def_type;
+
 };
 typedef struct Archetype Entities[ARCHETYPE_MAX_C];
 
@@ -51,12 +51,11 @@ struct Dungeon {
 	Entities entt;
 };
 
-void *componentMalloc(size_t, size_t);
-#define COMPONENT_ADD(arch, field, count)                                      \
-	arch->field = componentMalloc(count, sizeof(arch->field[0]))
+void dungeonCreate(struct Dungeon *);
+void dungeonGenerate(struct Dungeon *);
 
-int entityCreate(Entities all_types, ArchetypeEnum, vec16, Handle *);
-int entityJson(Entities, const char *filename, Handle);
+int entityJson(Entities, const char *filename, Handle *);
+
 int entityIsDead(Entities, Handle);
 Handle entityGet(Entities, ArchetypeEnum, vec16);
 int entityWhere(Entities, Handle, vec16);

@@ -13,7 +13,7 @@ menuInventory(struct Dungeon *d, struct Inventory *inven)
 		unsigned char alphabet = 'a' + alpha_i;
 		termPut(&ui, utf8Code(alphabet));
 		alpha_i++;
-		termPuts(&ui, d->entt[cur->type].names[cur->id]);
+		termPuts(&ui, d->entt[cur->type].name[cur->id]);
 		if (alpha_i >= 52)
 			break;
 	}
@@ -23,5 +23,7 @@ menuInventory(struct Dungeon *d, struct Inventory *inven)
 	termFlush();
 	termGet();
 
+
+	
 	return 1;
 }

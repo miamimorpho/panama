@@ -14,16 +14,13 @@ main(void)
 	dungeonGenerate(&d);
 
 	Handle player;
-	entityCreate(d.entt, ARCHETYPE_MONSTER, (vec16) {4, 4}, &player);
-	entityJson(d.entt, "player", player);
+	entityJson(d.entt, "player", &player);
 
 	Handle goblin;
-	entityCreate(d.entt, ARCHETYPE_MONSTER, (vec16) {16, 16}, &goblin);
-	entityJson(d.entt, "goblin", goblin);
+	entityJson(d.entt, "goblin", &goblin);
 
 	Handle sword;
-	entityCreate(d.entt, ARCHETYPE_ITEM, (vec16) {6, 6}, &sword);
-	entityJson(d.entt, "sword", sword);
+	entityJson(d.entt, "sword", &sword);
 
 	while (1) {
 		termClear();

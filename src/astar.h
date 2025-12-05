@@ -1,5 +1,5 @@
 #include <stdint.h>
-#include "dungeon.h"
+#include "entity.h"
 #include "ivec16.h"
 
 struct AStar;

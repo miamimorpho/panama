@@ -20,9 +20,6 @@ fovDrawFn(struct FovEffect *p, struct TerraPos ter, vec16 in)
 	termPut(&ui, terraGetTile(ter).utf);
 }
 
-// fog of war
-// change draw to bitmap
-
 int
 drawDungeon(struct Dungeon *d, vec16 o)
 {
@@ -32,9 +29,6 @@ drawDungeon(struct Dungeon *d, vec16 o)
 
 	struct TermUI ui = termRoot();
 
-	int32_t offset_x = o[0] - (uint32_t) (w / 2);
-	int32_t offset_y = o[1] - (uint32_t) (h / 2);
-
 	for (int y = 0; y < h; y++) {
 		for (int x = 0; x < w; x++) {
 			termMove(&ui, x, y);
@@ -42,16 +36,8 @@ drawDungeon(struct Dungeon *d, vec16 o)
 		}
 	}
 
-	/*
-	for (int y = 0; y < h; y++) {
-		for (int x = 0; x < w; x++) {
-			struct TerraPos pos =
-				terraPos(d->terrain, (vec16) {cam_x + x, cam_y + y});
-			termMove(&ui, x, y);
-			termPut(&ui, terraGetTile(pos).utf);
-		}
-	}
-	*/
+    int32_t offset_x = o[0] - (uint32_t) (w / 2);
+	int32_t offset_y = o[1] - (uint32_t) (h / 2);
 
 	struct FovDrawCtx ctx;
 	vec16Copy((vec16) {offset_x, offset_y}, ctx.offset);
@@ -66,7 +52,7 @@ drawDungeon(struct Dungeon *d, vec16 o)
 
 	HandleID item;
 	struct SpaceFinder item_finder;
-	SPACE_FIND(d->entt[ARCHETYPE_ITEM].space, o, 3, item_finder, item)
+	SPACE_FIND(d->entt[ARCHETYPE_ITEM].space, o, 16, item_finder, item)
 	{
 		vec16 pos;
 		spaceWhere(d->entt[ARCHETYPE_ITEM].space, item, pos);
@@ -74,20 +60,20 @@ drawDungeon(struct Dungeon *d, vec16 o)
 		if (bitmapGetPx(ctx.shadow, pos[0] - offset_x, pos[1] - offset_y, 0) ==
 			1) {
 			termMove(&ui, pos[0] - offset_x, pos[1] - offset_y);
-			termPut(&ui, d->entt[ARCHETYPE_ITEM].tiles[item].utf);
+			termPut(&ui, d->entt[ARCHETYPE_ITEM].tile[item].utf);
 		}
 	}
 
 	HandleID monster;
 	struct SpaceFinder mons_finder;
-	SPACE_FIND(d->entt[ARCHETYPE_MONSTER].space, o, 3, mons_finder, monster)
+	SPACE_FIND(d->entt[ARCHETYPE_MONSTER].space, o, 16, mons_finder, monster)
 	{
 		vec16 pos;
 		spaceWhere(d->entt[ARCHETYPE_MONSTER].space, monster, pos);
 		if (bitmapGetPx(ctx.shadow, pos[0] - offset_x, pos[1] - offset_y, 0) ==
 			1) {
 			termMove(&ui, pos[0] - offset_x, pos[1] - offset_y);
-			termPut(&ui, d->entt[ARCHETYPE_MONSTER].tiles[monster].utf);
+			termPut(&ui, d->entt[ARCHETYPE_MONSTER].tile[monster].utf);
 		}
 	}
 

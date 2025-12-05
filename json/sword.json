@@ -1,8 +1,8 @@
 {
-  "name": "Sword",
-  "bonus": 5,
-  "range": 0,
-  "defence": "fortitude",
-  "damage": 4,
-  "tile": "!"
+	"archetype": "item",
+	"name": "Sword",
+	"attack": 5,
+	"range": 1,
+	"damage": 4,
+	"tile": "!"
 }

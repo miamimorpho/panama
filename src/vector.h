@@ -18,6 +18,9 @@
 
 #define vec_free(v) free((v)->data)
 
+#define VECTOR_FULL(v) \
+  ((v)->len >= (v)->cap)
+
 #define VECTOR_PUSH(v, item)                                                   \
 	do {                                                                       \
 		assert((v)->len < (v)->cap && "Vector too full");                      \

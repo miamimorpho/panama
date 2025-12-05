@@ -1,4 +1,4 @@
 #include <stdint.h>
-#include "dungeon.h"
+#include "entity.h"
 
 int drawDungeon(struct Dungeon *, vec16);

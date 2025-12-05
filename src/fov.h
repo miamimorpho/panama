@@ -1,4 +1,4 @@
-#include "dungeon.h"
+#include "entity.h"
 #include "terra.h"
 #include "bitmap.h"
 

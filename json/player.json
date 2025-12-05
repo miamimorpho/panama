@@ -1,13 +1,17 @@
+
 {
-  "name": "Player",
+	"archetype": "actor",
+	"name": "Player",
+	"tile": "@",
+	
+	"hp": 100,
 
-  "tile": "@",
-  "hp": 100,
-
-  "str": 5,
-  "con": 5, 
-  "per": 5,
-  "dex": 5, 
-  "wis": 5,
-  "cha": 5
+	"str": 5,
+	"con": 5, 
+	"per": 5,
+	"dex": 5, 
+	"wis": 5,
+	"cha": 5,
+	
+	"inventory" : 22
 }
