@@ -9,7 +9,7 @@
 VECTOR(Inventory, Handle);
 
 struct Archetype {
-	
+
 	// Memory Management
 	uint32_t max;
 	uint32_t cur;
@@ -24,25 +24,24 @@ struct Archetype {
 								 // the Handles of the entities contained.
 	Handle *inventory_host; // if entity is stored within another, this points
 							// to its container entity
-	
+
 	// Actor Stats
 	int32_t *hp;
 
 	uint8_t alive;
-		
-    // Body
+
+	// Body
 	uint32_t *str;
 	uint32_t *con;
 	uint32_t *dex;
 	uint32_t *per;
 	uint32_t *wis;
 	uint32_t *cha;
-	
+
 	// Weapons Stats
 	uint32_t *attack;
 	uint32_t *range;
 	uint32_t *damage;
-
 };
 typedef struct Archetype Entities[ARCHETYPE_MAX_C];
 
@@ -52,7 +51,7 @@ struct Dungeon {
 };
 
 void dungeonCreate(struct Dungeon *);
-void dungeonGenerate(struct Dungeon *);
+int dungeonGenerate(struct Dungeon *, const char *);
 
 int entityJson(Entities, const char *filename, Handle *);
 

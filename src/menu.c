@@ -23,7 +23,5 @@ menuInventory(struct Dungeon *d, struct Inventory *inven)
 	termFlush();
 	termGet();
 
-
-	
 	return 1;
 }

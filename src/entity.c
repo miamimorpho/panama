@@ -8,12 +8,13 @@
 
 static const int ENTT_CHUNK_SIZE = 16;
 
-#define COMPONENT_QUERY_ADD(comp_name, arch, count, comps_json) \
-    do { \
-        if (hasComponent(comps_json, #comp_name)) { \
-            arch->comp_name = componentMalloc(count, sizeof(arch->comp_name[0])); \
-        } \
-    } while (0)
+#define COMPONENT_QUERY_ADD(comp_name, arch, count, comps_json)                \
+	do {                                                                       \
+		if (hasComponent(comps_json, #comp_name)) {                            \
+			arch->comp_name =                                                  \
+				componentMalloc(count, sizeof(arch->comp_name[0]));            \
+		}                                                                      \
+	} while (0)
 
 static inline size_t
 componentOverflow(size_t nmemb, size_t stride)
@@ -42,18 +43,20 @@ componentMalloc(size_t nmemb, size_t stride)
 }
 
 static int
-hasComponent(cJSON *comps_arr, const char *comp_name) {
-    if (!cJSON_IsArray(comps_arr)) return 0;
-    
-    cJSON *item = NULL;
+hasComponent(cJSON *comps_arr, const char *comp_name)
+{
+	if (!cJSON_IsArray(comps_arr))
+		return 0;
+
+	cJSON *item = NULL;
 	cJSON_ArrayForEach(item, comps_arr)
 	{
 		if (cJSON_IsString(item) &&
 			strncmp(item->valuestring, comp_name, strlen(comp_name)) == 0) {
-            return 1;
-        }
-    }
-    return 0;
+			return 1;
+		}
+	}
+	return 0;
 }
 
 static int
@@ -85,14 +88,14 @@ archetypeCreateOne(struct Archetype *form, cJSON *entry)
 	COMPONENT_QUERY_ADD(wis, form, c, comps);
 	COMPONENT_QUERY_ADD(cha, form, c, comps);
 	COMPONENT_QUERY_ADD(name, form, c, comps);
-	COMPONENT_QUERY_ADD(inventory, form, c, comps);	
+	COMPONENT_QUERY_ADD(inventory, form, c, comps);
 	COMPONENT_QUERY_ADD(inventory_host, form, c, comps);
 	COMPONENT_QUERY_ADD(attack, form, c, comps);
 	COMPONENT_QUERY_ADD(range, form, c, comps);
-	COMPONENT_QUERY_ADD(damage, form, c, comps);	
-	
+	COMPONENT_QUERY_ADD(damage, form, c, comps);
+
 	return 0;
-}	
+}
 
 static int
 archetypesCreate(struct Dungeon *d)
@@ -100,13 +103,13 @@ archetypesCreate(struct Dungeon *d)
 	cJSON *root = readJson("archetypes");
 	if (!root)
 		return 1;
-	
+
 	cJSON *actor = cJSON_GetObjectItemCaseSensitive(root, "actor");
 	archetypeCreateOne(&d->entt[ARCHETYPE_MONSTER], actor);
 
 	cJSON *item = cJSON_GetObjectItemCaseSensitive(root, "item");
-	archetypeCreateOne(&d->entt[ARCHETYPE_ITEM], item);	
-	
+	archetypeCreateOne(&d->entt[ARCHETYPE_ITEM], item);
+
 	cJSON_Delete(root);
 
 	return 0;
@@ -122,20 +125,20 @@ dungeonCreate(struct Dungeon *d)
 int
 entityAlloc(struct Archetype *a, HandleID *out)
 {
-  if(a->cur >= a->max){
-	  return 1;
-  }
-  *out = a->cur++;
-  spaceInsert(a->space, *out, (vec16) {0, 0});
-  
-  return 0;
+	if (a->cur >= a->max) {
+		return 1;
+	}
+	*out = a->cur++;
+	spaceInsert(a->space, *out, (vec16) {0, 0});
+
+	return 0;
 }
 
 int
 entityJson(Entities all_types, const char *filename, Handle *out)
 {
 	HandleID id;
-	
+
 	cJSON *json = readJson(filename);
 	if (!json)
 		return 1;
@@ -147,17 +150,19 @@ entityJson(Entities all_types, const char *filename, Handle *out)
 	if (archetype && cJSON_IsString(archetype)) {
 		if (strncmp(archetype->valuestring, "actor", strlen("actor")) == 0) {
 			out->type = ARCHETYPE_MONSTER;
-		}else if (!strncmp(archetype->valuestring, "item", strlen("item"))) {
+		} else if (!strncmp(archetype->valuestring, "item", strlen("item"))) {
 			out->type = ARCHETYPE_ITEM;
-		}else {
+		} else {
 			return 1;
 		}
 		a = &all_types[out->type];
+	} else {
+		return 1;
 	}
 
 	entityAlloc(a, &id);
 	out->id = id;
-	
+
 	// MetaData
 	readJsonCopyString(json, "name", a->name, id);
 	readJsonCopyChar(json, "tile", a->tile, id);
@@ -175,12 +180,12 @@ entityJson(Entities all_types, const char *filename, Handle *out)
 	readJsonCopyUint32(json, "range", a->range, id);
 	readJsonCopyUint32(json, "damage", a->damage, id);
 
-	// Inventory  
+	// Inventory
 	cJSON *inventory_c = cJSON_GetObjectItemCaseSensitive(json, "inventory");
 	if (cJSON_IsNumber(inventory_c)) {
-	  VECTOR_CREATE(&a->inventory[id], inventory_c->valueint);
+		VECTOR_CREATE(&a->inventory[id], inventory_c->valueint);
 	}
-	
+
 	/*
 	char *defence = NULL;
 	jsonPeakString(json, "defence", &defence);
@@ -245,11 +250,10 @@ entityMove(struct Dungeon *d, Handle in, vec16 delta)
 	if (terraGetSolid(tp))
 		return;
 
-	HandleID hit;
-	if (0 == spaceGet(type->space, &hit, delta)) {
-		if (type->hp[hit] >= 0)
-			return;
-	}
+	// HandleID hit;
+	// if (0 == spaceGet(type->space, &hit, delta)) {
+	//		return;
+	// }
 
 	spaceMove(type->space, in.id, delta);
 }

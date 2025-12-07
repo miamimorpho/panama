@@ -1,6 +1,4 @@
 * TODO
-walk over dead enemies
-how to deal with dead enemy?
 
 logging system
 
@@ -8,5 +6,6 @@ optinal color modes
 hud
 box drawing
 
-automate json to archetype loading, more debugging, less boilerplate
+add debugging to json reading
+add json entry for world gen
 more enemies/items

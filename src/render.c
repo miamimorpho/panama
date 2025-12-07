@@ -36,7 +36,7 @@ drawDungeon(struct Dungeon *d, vec16 o)
 		}
 	}
 
-    int32_t offset_x = o[0] - (uint32_t) (w / 2);
+	int32_t offset_x = o[0] - (uint32_t) (w / 2);
 	int32_t offset_y = o[1] - (uint32_t) (h / 2);
 
 	struct FovDrawCtx ctx;
@@ -76,6 +76,9 @@ drawDungeon(struct Dungeon *d, vec16 o)
 			termPut(&ui, d->entt[ARCHETYPE_MONSTER].tile[monster].utf);
 		}
 	}
+
+	// termMove(&ui, o[0] - offset_x, o[1] - offset_y);
+	// termPut(&ui, d-
 
 	return 0;
 }

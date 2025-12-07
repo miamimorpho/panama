@@ -1,0 +1,8 @@
+{
+	"wfc" : "test.png",
+	"width" : 64,
+	"height" : 64,
+	"actors" : {
+		"goblin" : 5
+	}
+}

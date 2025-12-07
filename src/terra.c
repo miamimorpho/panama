@@ -152,7 +152,7 @@ terraGetTile(struct TerraPos p)
 	static struct TermTile tile = {0};
 
 	if (!p.chunk) {
-		tile.utf = utf8Char("X");
+		tile.utf = utf8Char("#");
 		return tile;
 	}
 	return p.chunk->tile[p.pos[1] * CHUNK_LENGTH + p.pos[0]];

@@ -14,10 +14,15 @@ monsterAI(struct Dungeon *d, Handle m, Handle pla)
 	vec16 p1, p2;
 	entityWhere(d->entt, m, p1);
 	entityWhere(d->entt, pla, p2);
-	aStar(d, p1, p2, &aa);
+	aStar(d, p2, p1, &aa);
 	aStarBuildPath(aa, NULL, &path_len);
 	aStarBuildPath(aa, path, &path_len);
 	if (path_len) {
-		entityMove(d, m, path[path_len - 1]);
+		vec16 p3;
+		vec16Add(p1, path[1], p3);
+		Handle hit = entityGet(d->entt, ARCHETYPE_MONSTER, p3);
+
+		if (hit.type == ARCHETYPE_NONE)
+			entityMove(d, m, path[1]);
 	}
 }

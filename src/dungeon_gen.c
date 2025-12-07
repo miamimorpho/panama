@@ -11,13 +11,40 @@
 #include "entity.h"
 #include "terminal_types.h"
 #include "terra.h"
+#include "json.h"
 
-void
-dungeonGenerate(struct Dungeon *d)
+int
+dungeonGenerate(struct Dungeon *d, const char *level_file)
 {
-	struct wfc_image *sample = wfc_img_load("wfc/test.png");
+
+	cJSON *json = readJson(level_file);
+	if (!json)
+		return 1;
+
+	cJSON *json_wfc = cJSON_GetObjectItemCaseSensitive(json, "wfc");
+	if (!json_wfc || !cJSON_IsString(json_wfc)) {
+		return 1;
+	}
+
+	char filepath[256];
+	snprintf(filepath, sizeof(filepath), "./wfc/%s", json_wfc->valuestring);
+
+	cJSON *json_width = cJSON_GetObjectItemCaseSensitive(json, "width");
+	if (!json_width || !cJSON_IsNumber(json_width)) {
+		return 1;
+	}
+
+	cJSON *json_height = cJSON_GetObjectItemCaseSensitive(json, "height");
+	if (!json_height || !cJSON_IsNumber(json_height)) {
+		return 1;
+	}
+
+	int width = json_width->valueint;
+	int height = json_height->valueint;
+
+	struct wfc_image *sample = wfc_img_load(filepath);
 	assert(sample && "image does not exist for dungeonGenerate");
-	struct wfc *wfc = wfc_overlapping(100, 25, sample, 3, 3, 1, 1, 1, 1);
+	struct wfc *wfc = wfc_overlapping(width, height, sample, 3, 3, 1, 1, 1, 1);
 	wfc_run(wfc, -1);
 	struct wfc_image *output = wfc_output_image(wfc);
 

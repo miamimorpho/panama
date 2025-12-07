@@ -1,14 +1,14 @@
 {
 	"archetype": "actor",
-  "name": "Goblin",
+	"name": "Goblin",
 
-  "tile": "g",
-  "hp": 20,
+	"tile": "g",
+	"hp": 20,
 
-  "str": 4,
-  "con": 3, 
-  "per": 5,
-  "dex": 5, 
-  "wis": 5,
-  "cha": 1
+	"str": 4,
+	"con": 3, 
+	"per": 5,
+	"dex": 5, 
+	"wis": 5,
+	"cha": 1
 }

@@ -38,9 +38,10 @@ userInput(struct Dungeon *d, Handle pla)
 
 	Handle hit = entityGet(d->entt, ARCHETYPE_MONSTER, next);
 	if (hit.type == ARCHETYPE_MONSTER) {
-
-		entityAttack(d->entt, pla, hit);
-		return 0;
+		if (d->entt[hit.type].hp[hit.id] >= 0) {
+			entityAttack(d->entt, pla, hit);
+			return 0;
+		}
 	}
 
 	entityMove(d, pla, next);

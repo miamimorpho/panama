@@ -11,13 +11,14 @@ main(void)
 
 	struct Dungeon d;
 	dungeonCreate(&d);
-	dungeonGenerate(&d);
+	dungeonGenerate(&d, "dungeon");
 
 	Handle player;
 	entityJson(d.entt, "player", &player);
 
 	Handle goblin;
 	entityJson(d.entt, "goblin", &goblin);
+	entityMove(&d, goblin, (vec16) {5, 5});
 
 	Handle sword;
 	entityJson(d.entt, "sword", &sword);
