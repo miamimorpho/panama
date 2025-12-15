@@ -1,0 +1,23 @@
+* TODO
+
+fog
+
+error logging system
+game logging system
+l key to show/hide log
+
+optional color modes
+hud
+box drawing
+
+add debugging to json reading
+more enemies/items...
+each level has an npc that can spawn mobs
+building a reputation will make minions passive
+slaying a boss means they are not dead, 
+they will respawn on level rentry after 100 turns
+
+reputation
+-completing quests
+-giving items
+-surrender

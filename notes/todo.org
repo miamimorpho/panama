@@ -1,11 +1,18 @@
 * TODO
 
-logging system
+autotiling
+array of 16 bitmasks
+put bitmask in array, get tile
 
-optinal color modes
+fog
+
+error logging system
+game logging system
+l key to show/hide log
+
+optional color modes
 hud
 box drawing
 
 add debugging to json reading
-add json entry for world gen
-more enemies/items
+more enemies/items...
