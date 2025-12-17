@@ -12,6 +12,7 @@
 struct TerraChunk {
 	Bitmap *solid;
 	Bitmap *opaque;
+	Bitmap *fog;
 	struct TermTile *tile;
 };
 
@@ -37,6 +38,7 @@ terrainCreate(void)
 		struct TerraChunk *chunk = &tm->chunk[i];
 		chunk->solid = bitmapCreate(CHUNK_LENGTH, CHUNK_LENGTH);
 		chunk->opaque = bitmapCreate(CHUNK_LENGTH, CHUNK_LENGTH);
+		chunk->fog = bitmapCreate(CHUNK_LENGTH, CHUNK_LENGTH);
 		chunk->tile =
 			calloc(CHUNK_LENGTH * CHUNK_LENGTH, sizeof(struct TermTile));
 		for (int t = 0; t < CHUNK_LENGTH * CHUNK_LENGTH; t++) {
@@ -137,6 +139,24 @@ terraGetSolid(struct TerraPos p)
 		return 1;
 	return bitmapGetPx(p.chunk->solid, p.pos[0], p.pos[1], 1);
 }
+
+
+void
+terraPutFog(struct TerraPos p, bool val)
+{
+	if (!p.chunk)
+		return;
+	bitmapPutPx(p.chunk->fog, p.pos[0], p.pos[1], val);
+}
+
+bool
+terraGetFog(struct TerraPos p)
+{
+	if (!p.chunk)
+		return 0;
+	return bitmapGetPx(p.chunk->fog, p.pos[0], p.pos[1], 1);
+}
+
 
 void
 terraPutTile(struct TerraPos p, struct TermTile ch)

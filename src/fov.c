@@ -153,6 +153,6 @@ fov(struct Dungeon *d, vec16 camera, struct FovEffect *effect)
 	vec16Copy(camera, first.camera);
 	for (int dir = 0; dir < 4; dir++) {
 		first.dir = dir;
-		scanRow(first, d, 32, effect);
+		scanRow(first, d, 8, effect);
 	}
 }

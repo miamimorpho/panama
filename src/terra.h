@@ -15,5 +15,7 @@ void terraPutOpaque(struct TerraPos, bool);
 bool terraGetOpaque(struct TerraPos);
 void terraPutSolid(struct TerraPos, bool);
 bool terraGetSolid(struct TerraPos);
+void terraPutFog(struct TerraPos, bool);
+bool terraGetFog(struct TerraPos);
 void terraPutTile(struct TerraPos, struct TermTile);
 struct TermTile terraGetTile(struct TerraPos);

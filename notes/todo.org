@@ -1,10 +1,10 @@
 * TODO
 
+sokuban boulders
+
 autotiling
 array of 16 bitmasks
 put bitmask in array, get tile
-
-fog
 
 error logging system
 game logging system

@@ -16,6 +16,7 @@ fovDrawFn(struct FovEffect *p, struct TerraPos ter, vec16 in)
 	struct TermUI ui = termRoot();
 
 	bitmapPutPx(ctx->shadow, in[0] - ctx->offset[0], in[1] - ctx->offset[1], 1);
+	terraPutFog(ter, 1);
 	//termMove(&ui, in[0] - ctx->offset[0], in[1] - ctx->offset[1]);
 	//termPut(&ui, terraGetTile(ter).utf);
 }
@@ -52,6 +53,8 @@ drawDungeon(struct Dungeon *d, vec16 o)
 
 			if(bitmapGetPx(ctx.shadow, x, y, 1)){
 				termPut(&ui, terraGetTile(ter).utf);
+			} else if (terraGetFog(ter) == 0) {
+				termPut(&ui, UTF8_NULL);
 			} else if (terraGetSolid(ter)){
 				termPut(&ui, utf8Code(0x2591));
 			} else {
