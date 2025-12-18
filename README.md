@@ -2,11 +2,12 @@
 A classical roguelike in C
 
 ## Compile Instructions
- ```make
+ ```
+make
 ./rogue
 ```
 
 # Dependencies / Thanks
-  cjson
-  wfc
-  stb_image
+  * cjson
+  * wfc
+  * stb_image
