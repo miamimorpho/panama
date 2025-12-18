@@ -17,8 +17,8 @@ fovDrawFn(struct FovEffect *p, struct TerraPos ter, vec16 in)
 
 	bitmapPutPx(ctx->shadow, in[0] - ctx->offset[0], in[1] - ctx->offset[1], 1);
 	terraPutFog(ter, 1);
-	//termMove(&ui, in[0] - ctx->offset[0], in[1] - ctx->offset[1]);
-	//termPut(&ui, terraGetTile(ter).utf);
+	// termMove(&ui, in[0] - ctx->offset[0], in[1] - ctx->offset[1]);
+	// termPut(&ui, terraGetTile(ter).utf);
 }
 
 int
@@ -43,7 +43,7 @@ drawDungeon(struct Dungeon *d, vec16 o)
 	};
 
 	fov(d, o, &draw);
-	
+
 	for (int y = 0; y < h; y++) {
 		for (int x = 0; x < w; x++) {
 
@@ -51,19 +51,18 @@ drawDungeon(struct Dungeon *d, vec16 o)
 			vec16 target = {x + offset_x, y + offset_y};
 			struct TerraPos ter = terraPos(d->terrain, target);
 
-			if(bitmapGetPx(ctx.shadow, x, y, 1)){
+			if (bitmapGetPx(ctx.shadow, x, y, 1)) {
 				termPut(&ui, terraGetTile(ter).utf);
 			} else if (terraGetFog(ter) == 0) {
 				termPut(&ui, UTF8_NULL);
-			} else if (terraGetSolid(ter)){
+			} else if (terraGetSolid(ter)) {
 				termPut(&ui, utf8Code(0x2591));
 			} else {
 				termPut(&ui, UTF8_NULL);
 			}
-									
 		}
 	}
-	
+
 	HandleID item;
 	struct SpaceFinder item_finder;
 	SPACE_FIND(d->entt[ARCHETYPE_ITEM].space, o, 16, item_finder, item)

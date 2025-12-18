@@ -227,13 +227,8 @@ termFlush(void)
 	if (TERM->resize) {
 		resize();
 	}
-}
 
-void
-termSwap(void)
-{
 	TERM->frame = NEXT_FRAME;
-	termClear();
 }
 
 static void

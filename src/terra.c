@@ -140,7 +140,6 @@ terraGetSolid(struct TerraPos p)
 	return bitmapGetPx(p.chunk->solid, p.pos[0], p.pos[1], 1);
 }
 
-
 void
 terraPutFog(struct TerraPos p, bool val)
 {
@@ -156,7 +155,6 @@ terraGetFog(struct TerraPos p)
 		return 0;
 	return bitmapGetPx(p.chunk->fog, p.pos[0], p.pos[1], 1);
 }
-
 
 void
 terraPutTile(struct TerraPos p, struct TermTile ch)
