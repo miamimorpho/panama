@@ -24,13 +24,16 @@ main(void)
 	entityJson(d.entt, "sword", &sword);
 
 	while (1) {
-		termClear();
+		
 		vec16 player_pos;
 		entityWhere(d.entt, player, player_pos);
+
 		drawDungeon(&d, player_pos);
 		termFlush();
+
 		if (userInput(&d, player))
 			continue;
+
 		monsterAI(&d, goblin, player);
 	}
 }

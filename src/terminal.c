@@ -123,6 +123,10 @@ termPuts(struct TermUI *ui, const char *str)
 	} while (0 == utf8Next(&str));
 }
 
+/* reads in an utf8 enocoded char, if its size is greater than 1 byte,
+ * its value must be greater than 255, and therefore not an ascii
+ * character at all, return 0
+ */
 static char
 asciiGet(void)
 {
@@ -133,9 +137,17 @@ asciiGet(void)
 	return utf.bytes[0];
 }
 
+/* reads in a sanitized and unmalformed ascii char
+ * if its ESC, break off into control seqeuence handling
+ */
 int64_t
 termGet(void)
 {
+	if (TERM->resize == 1){
+	  TERM->resize = 0;
+	  return T_KEY_NONE;
+	}
+	
 	char first = asciiGet();
 	if (first == 0)
 		return T_KEY_NONE;
@@ -194,7 +206,7 @@ resize(void)
 	SAY(ESCA CLEARTERM);
 	termClear();
 	// clear(1);
-	TERM->resize = 0;
+	//TERM->resize = 0;
 }
 
 void
@@ -226,8 +238,9 @@ termFlush(void)
 
 	if (TERM->resize) {
 		resize();
+		//TERM->resize = 1;
 	}
-
+	
 	TERM->frame = NEXT_FRAME;
 }
 
@@ -245,6 +258,28 @@ resizeHandler(int i)
 {
 	(void) (i);
 	TERM->resize = 1;
+}
+
+static void setup_signals(void) {
+    struct sigaction sa;
+
+    // Common handler: exit
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = exit;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;                  // no SA_RESTART etc. unless you want it
+
+    sigaction(SIGTERM, &sa, NULL);
+    sigaction(SIGINT,  &sa, NULL);
+    sigaction(SIGTRAP, &sa, NULL);
+
+    // SIGWINCH handler: resizeHandler
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = resizeHandler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;                  // important if you want read() interrupted
+
+    sigaction(SIGWINCH, &sa, NULL);
 }
 
 void
@@ -272,15 +307,19 @@ termInit(void)
 
 	// assign handlers for polite exit and resize
 	atexit(restore);
-	signal(SIGTERM, exit);
-	signal(SIGINT, exit);
-	signal(SIGTRAP, exit);
-	signal(SIGWINCH, resizeHandler);
+	setup_signals();
+	
+	//signal(SIGTERM, exit);
+	//signal(SIGINT, exit);
+	//signal(SIGTRAP, exit);
+	//signal(SIGWINCH, resizeHandler);
 
 	SAY(ESCA ALTBUF HIGH ESCA CLEARTERM ESCA CURSOR LOW);
 
 	resizeHandler(0);
 	resize();
+	TERM->resize = 0;
+	
 }
 
 void
