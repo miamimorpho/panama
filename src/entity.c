@@ -292,7 +292,7 @@ entityAttack(Entities entts, Handle atk, Handle def)
 
 	if (def_entt->hp[def.id] <= 0) {
 
-		def_entt->tile[def.id].utf = utf8Char("X");
+		def_entt->tile[def.id].utf = utf8Decomp("X");
 	}
 
 	return 0;

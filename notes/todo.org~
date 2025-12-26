@@ -1,10 +1,23 @@
 * TODO
-walk over dead enemies
-how to deal with dead enemy?
 
-optinal color modes
+fix json loading of utf8 chars
+
+error logging system
+
+optional color modes
+
+sokuban boulders
+
+autotiling
+array of 16 bitmasks
+put bitmask in array, get tile
+
+
+game logging system
+l key to show/hide log
+
 hud
 box drawing
 
-automate json to archetype loading, more debugging, less boilerplate
-more enemies/items
+add debugging to json reading
+more enemies/items...

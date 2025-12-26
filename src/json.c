@@ -18,7 +18,7 @@ readJsonCopyChar(cJSON *root, const char *key, struct TermTile *array,
 		elm->valuestring[0] == '\0') {
 		return 1;
 	}
-	array[index].utf.bytes[0] = elm->valuestring[0];
+	array[index].utf = utf8Decomp(elm->valuestring);
 	return 0;
 }
 

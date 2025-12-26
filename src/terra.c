@@ -42,7 +42,7 @@ terrainCreate(void)
 		chunk->tile =
 			calloc(CHUNK_LENGTH * CHUNK_LENGTH, sizeof(struct TermTile));
 		for (int t = 0; t < CHUNK_LENGTH * CHUNK_LENGTH; t++) {
-			chunk->tile[t].utf = utf8Char(" ");
+			chunk->tile[t].utf = utf8Decomp(" ");
 		}
 	}
 
@@ -170,7 +170,7 @@ terraGetTile(struct TerraPos p)
 	static struct TermTile tile = {0};
 
 	if (!p.chunk) {
-		tile.utf = utf8Char("#");
+		tile.utf = utf8Decomp("#");
 		return tile;
 	}
 	return p.chunk->tile[p.pos[1] * CHUNK_LENGTH + p.pos[0]];

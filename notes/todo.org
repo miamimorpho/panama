@@ -1,16 +1,18 @@
 * TODO
 
+error logging system
+
+optional color modes
+
 sokuban boulders
 
 autotiling
 array of 16 bitmasks
 put bitmask in array, get tile
 
-error logging system
 game logging system
 l key to show/hide log
 
-optional color modes
 hud
 box drawing
 

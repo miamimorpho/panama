@@ -10,7 +10,6 @@
 #include <locale.h>
 
 #include "terminal.h"
-// #include "maths.h"
 
 #define TERMINAL_DEF_WID 80
 #define TERMINAL_DEF_HEI 24
@@ -54,7 +53,6 @@ struct TermUI
 termWin(struct TermUI cur, int width, int height, int margin_left,
 		int margin_top)
 {
-
 	return (struct TermUI) {
 		cur.margin_top + margin_top + cur.y,
 		cur.margin_left + margin_left + cur.x,
@@ -70,14 +68,6 @@ fbGet(int frame, uint16_t x, uint16_t y)
 {
 	size_t index = (FRAMEBUFFER_SIZE * frame) + (y * TERM->width + x);
 	return &TERM->fb[index];
-}
-
-int
-fbCompare(uint16_t x, uint16_t y)
-{
-	struct TermTile *cur = fbGet(TERM->frame, x, y);
-	struct TermTile *nex = fbGet(NEXT_FRAME, x, y);
-	return (utf8Equal(cur->utf, nex->utf));
 }
 
 void
@@ -97,14 +87,10 @@ termMove(struct TermUI *ui, int dx, int dy)
 void
 termPut(struct TermUI *ui, utf8_ch ch)
 {
-
 	if (ui->x < 0 || ui->y < 0)
 		return;
 	if (ui->x >= TERM->width)
 		return;
-
-	// if(utf8Equal(ch, UTF8_NULL))
-	//     ch = utf8Char(" ");
 
 	fbGet(TERM->frame, ui->x + ui->margin_left, ui->y + ui->margin_top)->utf =
 		ch;
@@ -112,18 +98,18 @@ termPut(struct TermUI *ui, utf8_ch ch)
 }
 
 void
-termPuts(struct TermUI *ui, const char *str)
+termPuts(struct TermUI *ui, utf8 *str)
 {
 	if (!str)
 		return;
 
 	do {
-		utf8_ch ch = utf8Char(str);
+		utf8_ch ch = utf8Decomp(str);
 		termPut(ui, ch);
 	} while (0 == utf8Next(&str));
 }
 
-/* reads in an utf8 enocoded char, if its size is greater than 1 byte,
+/* reads in an utf8 enocoded cha r, if its size is greater than 1 byte,
  * its value must be greater than 255, and therefore not an ascii
  * character at all, return 0
  */
@@ -131,7 +117,7 @@ static char
 asciiGet(void)
 {
 	utf8_ch utf = utf8Get(STDIN_FILENO);
-	if ((utf8ChSize(utf.bytes) != 1))
+	if (utf.size != 1)
 		return 0;
 
 	return utf.bytes[0];
@@ -143,11 +129,11 @@ asciiGet(void)
 int64_t
 termGet(void)
 {
-	if (TERM->resize == 1){
-	  TERM->resize = 0;
-	  return T_KEY_NONE;
+	if (TERM->resize == 1) {
+		TERM->resize = 0;
+		return T_KEY_NONE;
 	}
-	
+
 	char first = asciiGet();
 	if (first == 0)
 		return T_KEY_NONE;
@@ -205,42 +191,40 @@ resize(void)
 	TERM->height = ws.ws_row;
 	SAY(ESCA CLEARTERM);
 	termClear();
-	// clear(1);
-	//TERM->resize = 0;
 }
 
 void
 termFlush(void)
 {
-	int next = NEXT_FRAME;
-
 	for (uint16_t y = 0; y < TERM->height; y++) {
 		uint16_t x = 0;
-		while (x < TERM->width) {
-			if (!fbCompare(x, y)) {
-				printf(ESCA "%d;%dH", y + 1, x + 1);
-				while (x < TERM->width) {
-					if (!fbCompare(x, y)) {
-						utf8_ch ch = fbGet(TERM->frame, x, y)->utf;
-						utf8Put(ch);
-						fbGet(next, x, y)->utf = ch;
-						x++;
-					} else {
-						break;
-					}
-				}
-			} else {
-				x++;
-			}
+		bool pen_down = false;
 
-		} // end of line
+		while (x < TERM->width) {
+
+			struct TermTile *cur = fbGet(TERM->frame, x, y);
+			struct TermTile *nex = fbGet(NEXT_FRAME, x, y);
+			if (utf8Equal(cur->utf, nex->utf)) {
+
+				if (!pen_down) {
+					printf(ESCA "%d;%dH", y + 1, x + 1);
+					pen_down = true;
+				}
+
+				utf8_ch ch = fbGet(TERM->frame, x, y)->utf;
+				utf8Put(ch);
+
+			} else {
+				pen_down = false;
+			}
+			x++;
+		}
 	}
 
 	if (TERM->resize) {
 		resize();
-		//TERM->resize = 1;
 	}
-	
+
 	TERM->frame = NEXT_FRAME;
 }
 
@@ -260,26 +244,28 @@ resizeHandler(int i)
 	TERM->resize = 1;
 }
 
-static void setup_signals(void) {
-    struct sigaction sa;
+static void
+setup_signals(void)
+{
+	struct sigaction sa;
 
-    // Common handler: exit
-    memset(&sa, 0, sizeof(sa));
-    sa.sa_handler = exit;
-    sigemptyset(&sa.sa_mask);
-    sa.sa_flags = 0;                  // no SA_RESTART etc. unless you want it
+	// Common handler: exit
+	memset(&sa, 0, sizeof(sa));
+	sa.sa_handler = exit;
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = 0; // no SA_RESTART etc. unless you want it
 
-    sigaction(SIGTERM, &sa, NULL);
-    sigaction(SIGINT,  &sa, NULL);
-    sigaction(SIGTRAP, &sa, NULL);
+	sigaction(SIGTERM, &sa, NULL);
+	sigaction(SIGINT, &sa, NULL);
+	sigaction(SIGTRAP, &sa, NULL);
 
-    // SIGWINCH handler: resizeHandler
-    memset(&sa, 0, sizeof(sa));
-    sa.sa_handler = resizeHandler;
-    sigemptyset(&sa.sa_mask);
-    sa.sa_flags = 0;                  // important if you want read() interrupted
+	// SIGWINCH handler: resizeHandler
+	memset(&sa, 0, sizeof(sa));
+	sa.sa_handler = resizeHandler;
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = 0; // important if you want read() interrupted
 
-    sigaction(SIGWINCH, &sa, NULL);
+	sigaction(SIGWINCH, &sa, NULL);
 }
 
 void
@@ -308,18 +294,17 @@ termInit(void)
 	// assign handlers for polite exit and resize
 	atexit(restore);
 	setup_signals();
-	
-	//signal(SIGTERM, exit);
-	//signal(SIGINT, exit);
-	//signal(SIGTRAP, exit);
-	//signal(SIGWINCH, resizeHandler);
+
+	// signal(SIGTERM, exit);
+	// signal(SIGINT, exit);
+	// signal(SIGTRAP, exit);
+	// signal(SIGWINCH, resizeHandler);
 
 	SAY(ESCA ALTBUF HIGH ESCA CLEARTERM ESCA CURSOR LOW);
 
 	resizeHandler(0);
 	resize();
 	TERM->resize = 0;
-	
 }
 
 void

@@ -17,8 +17,6 @@ fovDrawFn(struct FovEffect *p, struct TerraPos ter, vec16 in)
 
 	bitmapPutPx(ctx->shadow, in[0] - ctx->offset[0], in[1] - ctx->offset[1], 1);
 	terraPutFog(ter, 1);
-	// termMove(&ui, in[0] - ctx->offset[0], in[1] - ctx->offset[1]);
-	// termPut(&ui, terraGetTile(ter).utf);
 }
 
 int
@@ -56,7 +54,7 @@ drawDungeon(struct Dungeon *d, vec16 o)
 			} else if (terraGetFog(ter) == 0) {
 				termPut(&ui, UTF8_NULL);
 			} else if (terraGetSolid(ter)) {
-				termPut(&ui, utf8Code(0x2591));
+				termPut(&ui, utf8Code32(0x2591));
 			} else {
 				termPut(&ui, UTF8_NULL);
 			}
@@ -89,9 +87,6 @@ drawDungeon(struct Dungeon *d, vec16 o)
 			termPut(&ui, d->entt[ARCHETYPE_MONSTER].tile[monster].utf);
 		}
 	}
-
-	// termMove(&ui, o[0] - offset_x, o[1] - offset_y);
-	// termPut(&ui, d-
 
 	return 0;
 }

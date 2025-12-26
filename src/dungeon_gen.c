@@ -49,7 +49,7 @@ dungeonGenerate(struct Dungeon *d, const char *level_file)
 	struct wfc_image *output = wfc_output_image(wfc);
 
 	struct TermTile tile;
-	tile.utf = utf8Code(0);
+	tile.utf = utf8Code32(0);
 	tile.fg = (Color) {0, 0, 0};
 	tile.bg = (Color) {200, 200, 200};
 
@@ -58,12 +58,12 @@ dungeonGenerate(struct Dungeon *d, const char *level_file)
 			size_t i = (y * output->width + x) * output->component_cnt;
 			struct TerraPos pos = terraPosNew(d->terrain, (vec16) {x, y});
 			if (output->data[i] == 0) {
-				tile.utf = utf8Code(0x2593);
+				tile.utf = utf8Code32(0x2593);
 				terraPutTile(pos, tile);
 				terraPutOpaque(pos, 1);
 				terraPutSolid(pos, 1);
 			} else {
-				tile.utf = utf8Code('.');
+				tile.utf = utf8Code32('.');
 				terraPutTile(pos, tile);
 			}
 		}

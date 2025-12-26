@@ -1,5 +1,7 @@
+
 #include <string.h>
 #include <unistd.h>
+#include <assert.h>
 
 #include "utf8.h"
 
@@ -9,40 +11,14 @@
 #define UTF8_CONT_PREFIX 0x80  // 10xxxxxx
 #define UTF8_6BIT_MASK 0x3F	   // 00111111
 
-utf8_ch
-utf8Code(uint32_t code)
+/*
+ * Determine UTF8 character length from first byte
+ * returns 0 for malformed or naughty bytes
+ */
+static unsigned int
+utf8ChSize(utf8 *s)
 {
-	utf8_ch out = {0};
-
-	if (code <= 0x7F) {
-		out.bytes[0] = code;
-		return out;
-	}
-
-	if (code <= 0x7FF) {
-		out.bytes[0] = UTF8_2BYTE_PREFIX | (code >> 6);
-		out.bytes[1] = UTF8_CONT_PREFIX | (code & UTF8_6BIT_MASK);
-		return out;
-	}
-
-	if (code <= 0xFFFF) {
-		out.bytes[0] = UTF8_3BYTE_PREFIX | (code >> 12);
-		out.bytes[1] = UTF8_CONT_PREFIX | ((code >> 6) & UTF8_6BIT_MASK);
-		out.bytes[2] = UTF8_CONT_PREFIX | (code & UTF8_6BIT_MASK);
-		return out;
-	}
-
-	out.bytes[0] = UTF8_4BYTE_PREFIX | (code >> 18);
-	out.bytes[1] = UTF8_CONT_PREFIX | ((code >> 12) & UTF8_6BIT_MASK);
-	out.bytes[2] = UTF8_CONT_PREFIX | ((code >> 6) & UTF8_6BIT_MASK);
-	out.bytes[3] = UTF8_CONT_PREFIX | (code & UTF8_6BIT_MASK);
-	return out;
-}
-
-// Determine UTF-8 character length from first byte
-unsigned int
-utf8ChSize(utf8_str s)
-{
+	assert(s && "utf8ChSize cannot be used on NULL");
 	unsigned char first = s[0];
 	switch (first >> 4) {
 	case 0x0:
@@ -67,39 +43,87 @@ utf8ChSize(utf8_str s)
 	}
 }
 
+/*
+ * Converts a utf32 codepoint into a ut8f_ch
+ */
+utf8_ch
+utf8Code32(uint32_t code)
+{
+	utf8_ch out = {0};
+
+	if (code <= 0x7F) {
+		out.bytes[0] = code;
+		out.size = 1;
+		return out;
+	}
+
+	if (code <= 0x7FF) {
+		out.bytes[0] = UTF8_2BYTE_PREFIX | (code >> 6);
+		out.bytes[1] = UTF8_CONT_PREFIX | (code & UTF8_6BIT_MASK);
+		out.size = 2;
+		return out;
+	}
+
+	if (code <= 0xFFFF) {
+		out.bytes[0] = UTF8_3BYTE_PREFIX | (code >> 12);
+		out.bytes[1] = UTF8_CONT_PREFIX | ((code >> 6) & UTF8_6BIT_MASK);
+		out.bytes[2] = UTF8_CONT_PREFIX | (code & UTF8_6BIT_MASK);
+		out.size = 3;
+		return out;
+	}
+
+	out.bytes[0] = UTF8_4BYTE_PREFIX | (code >> 18);
+	out.bytes[1] = UTF8_CONT_PREFIX | ((code >> 12) & UTF8_6BIT_MASK);
+	out.bytes[2] = UTF8_CONT_PREFIX | ((code >> 6) & UTF8_6BIT_MASK);
+	out.bytes[3] = UTF8_CONT_PREFIX | (code & UTF8_6BIT_MASK);
+	out.size = 4;
+	return out;
+}
+
 void
 utf8Put(utf8_ch ch)
 {
-	if (utf8Equal(ch, UTF8_NULL)) {
+	if (ch.size == 0) {
 		write(STDOUT_FILENO, " ", 1);
 		return;
 	}
 
-	int len = utf8ChSize(ch.bytes);
-	write(STDOUT_FILENO, ch.bytes, len);
+	// int len = utf8ChSize(ch.bytes);
+
+	write(STDOUT_FILENO, ch.bytes, ch.size);
 }
 
 int
 utf8Equal(utf8_ch a, utf8_ch b)
 {
-	return !(memcmp(&a, &b, sizeof(utf8_ch)));
+	if (a.size != b.size)
+		return 1;
+
+	return memcmp(&a.bytes, &b.bytes, a.size);
 }
 
+/*
+ * converts the first utf8 char in a string into a utf8_ch
+ */
 utf8_ch
-utf8Char(utf8_str in)
+utf8Decomp(utf8 *str)
 {
 	utf8_ch out;
-	int len = utf8ChSize(in);
-	memcpy(out.bytes, in, len);
-	memset(out.bytes + len, 0, 4 - len);
+	out.size = utf8ChSize(str);
+	memcpy(out.bytes, str, out.size);
+	memset(out.bytes + out.size, 0, UTF8_BYTES_SIZE - out.size);
 	return out;
 }
 
+/*
+ * advances a pointer to a utf8 string by one utf8 char
+ * return 1 on error and EOF
+ */
 int
-utf8Next(utf8_str *str)
+utf8Next(utf8 **str)
 {
 	if (!*str || **str == '\0') {
-		return 1; // End of string
+		return 1;
 	}
 
 	int len = utf8ChSize(*str);
@@ -110,24 +134,28 @@ utf8Next(utf8_str *str)
 	return **str == '\0' ? 1 : 0;
 }
 
+/*
+ * reads in a utf8 char from a file descriptor
+ * used for capturing keyboard entry from stdin
+ */
 utf8_ch
 utf8Get(int fd)
 {
 	utf8_ch ch = {0};
-	int len = 0;
+
 	if (read(fd, ch.bytes, 1) <= 0)
 		return UTF8_NULL;
 
-	if ((len = utf8ChSize(ch.bytes)) <= 1)
+	if ((ch.size = utf8ChSize(ch.bytes)) <= 1)
 		return ch;
 
-	if (read(fd, &ch.bytes[1], len - 1) != len - 1)
+	if (read(fd, &ch.bytes[1], ch.size - 1) != ch.size - 1)
 		return UTF8_NULL;
 
 	// Fast continuation byte check - validate all at once
 	// Each continuation byte must be 10xxxxxx
 	unsigned char mask = 0;
-	for (int i = 1; i < len; i++) {
+	for (int i = 1; i < ch.size; i++) {
 		mask |= ch.bytes[i];
 	}
 	// If any continuation byte is invalid

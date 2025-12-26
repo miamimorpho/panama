@@ -35,7 +35,7 @@ struct TermUI termWin(struct TermUI, int, int, int, int);
 
 void termMove(struct TermUI *, int, int);
 void termPut(struct TermUI *, utf8_ch);
-void termPuts(struct TermUI *, utf8_str);
+void termPuts(struct TermUI *, utf8 *);
 void termClear(void);
 void termSize(uint16_t *, uint16_t *);
 int64_t termGet(void);

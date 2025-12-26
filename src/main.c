@@ -24,7 +24,7 @@ main(void)
 	entityJson(d.entt, "sword", &sword);
 
 	while (1) {
-		
+
 		vec16 player_pos;
 		entityWhere(d.entt, player, player_pos);
 

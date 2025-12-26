@@ -11,7 +11,7 @@ menuInventory(struct Dungeon *d, struct Inventory *inven)
 	VECTOR_EACH(inven, cur)
 	{
 		unsigned char alphabet = 'a' + alpha_i;
-		termPut(&ui, utf8Code(alphabet));
+		termPut(&ui, utf8Code32(alphabet));
 		alpha_i++;
 		termPuts(&ui, d->entt[cur->type].name[cur->id]);
 		if (alpha_i >= 52)
