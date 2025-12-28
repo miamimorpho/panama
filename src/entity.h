@@ -5,6 +5,7 @@
 #include "ivec16.h"
 #include "handle.h"
 #include "vector.h"
+#include "terminal_types.h"
 
 VECTOR(Inventory, Handle);
 
@@ -16,8 +17,9 @@ struct Archetype {
 
 	// Components Begin
 	char **name;
-	struct TermTile *tile;
-
+	utf8_ch *glyph;
+	enum ColorSym *color;
+		
 	// Location
 	struct Space *space;
 	struct Inventory *inventory; // if entity stores items, this is an array of

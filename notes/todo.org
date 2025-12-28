@@ -3,6 +3,7 @@
 error logging system
 
 optional color modes
+blood and gore
 
 sokuban boulders
 

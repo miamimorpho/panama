@@ -3,6 +3,12 @@
 
 struct Terrain;
 
+struct TerraTile {
+	utf8_ch utf;
+	enum ColorSym fg;
+	enum ColorSym bg;	
+};
+
 struct TerraPos {
 	struct TerraChunk *chunk;
 	vec16 pos;
@@ -17,5 +23,7 @@ void terraPutSolid(struct TerraPos, bool);
 bool terraGetSolid(struct TerraPos);
 void terraPutFog(struct TerraPos, bool);
 bool terraGetFog(struct TerraPos);
-void terraPutTile(struct TerraPos, struct TermTile);
-struct TermTile terraGetTile(struct TerraPos);
+
+void terraPutTile(struct TerraPos, struct TerraTile);
+struct TerraTile terraGetTile(struct TerraPos);
+

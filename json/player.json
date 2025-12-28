@@ -2,8 +2,9 @@
 {
 	"archetype": "actor",
 	"name": "Player",
-	"tile": "@",
-	
+	"glyph": "@",
+	"color": "monster",
+
 	"hp": 100,
 
 	"str": 5,

@@ -1,8 +1,9 @@
 {
 	"archetype": "actor",
 	"name": "Goblin",
+	"glyph": "g",
+	"color": "monster",
 
-	"tile": "g",
 	"hp": 20,
 
 	"str": 4,

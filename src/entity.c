@@ -79,7 +79,8 @@ archetypeCreateOne(struct Archetype *form, cJSON *entry)
 	form->space = spaceCreate(ENTT_CHUNK_SIZE, c);
 
 	COMPONENT_QUERY_ADD(name, form, c, comps);
-	COMPONENT_QUERY_ADD(tile, form, c, comps);
+	COMPONENT_QUERY_ADD(glyph, form, c, comps);
+	COMPONENT_QUERY_ADD(color, form, c, comps);	
 	COMPONENT_QUERY_ADD(hp, form, c, comps);
 	COMPONENT_QUERY_ADD(str, form, c, comps);
 	COMPONENT_QUERY_ADD(con, form, c, comps);
@@ -165,7 +166,8 @@ entityJson(Entities all_types, const char *filename, Handle *out)
 
 	// MetaData
 	readJsonCopyString(json, "name", a->name, id);
-	readJsonCopyChar(json, "tile", a->tile, id);
+	readJsonCopyChar(json, "glyph", a->glyph, id);
+	
 	readJsonCopyInt(json, "hp", a->hp, id);
 
 	// Actor Stats
@@ -174,7 +176,7 @@ entityJson(Entities all_types, const char *filename, Handle *out)
 	readJsonCopyUint32(json, "per", a->per, id);
 	readJsonCopyUint32(json, "dex", a->dex, id);
 	readJsonCopyUint32(json, "wis", a->wis, id);
-
+	
 	// Weapon Stats
 	readJsonCopyUint32(json, "attack", a->attack, id);
 	readJsonCopyUint32(json, "range", a->range, id);
@@ -292,7 +294,7 @@ entityAttack(Entities entts, Handle atk, Handle def)
 
 	if (def_entt->hp[def.id] <= 0) {
 
-		def_entt->tile[def.id].utf = utf8Decomp("X");
+		def_entt->glyph[def.id] = utf8Decomp("X");
 	}
 
 	return 0;

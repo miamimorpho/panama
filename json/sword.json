@@ -1,8 +1,9 @@
 {
 	"archetype": "item",
 	"name": "Sword",
+	"glyph": "!",
+	"color": "weapon",
 	"attack": 5,
 	"range": 1,
-	"damage": 4,
-	"tile": "!"
+	"damage": 4
 }

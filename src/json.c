@@ -5,7 +5,7 @@
 #include "json.h"
 
 int
-readJsonCopyChar(cJSON *root, const char *key, struct TermTile *array,
+readJsonCopyChar(cJSON *root, const char *key, utf8_ch *array,
 				 size_t index)
 {
 	if (!array)
@@ -18,7 +18,7 @@ readJsonCopyChar(cJSON *root, const char *key, struct TermTile *array,
 		elm->valuestring[0] == '\0') {
 		return 1;
 	}
-	array[index].utf = utf8Decomp(elm->valuestring);
+	array[index] = utf8Decomp(elm->valuestring);
 	return 0;
 }
 

@@ -13,8 +13,6 @@ void
 fovDrawFn(struct FovEffect *p, struct TerraPos ter, vec16 in)
 {
 	struct FovDrawCtx *ctx = (struct FovDrawCtx *) p->ctx;
-	struct TermUI ui = termRoot();
-
 	bitmapPutPx(ctx->shadow, in[0] - ctx->offset[0], in[1] - ctx->offset[1], 1);
 	terraPutFog(ter, 1);
 }
@@ -61,6 +59,8 @@ drawDungeon(struct Dungeon *d, vec16 o)
 		}
 	}
 
+	ui.fg = COLOR_BG;
+	
 	HandleID item;
 	struct SpaceFinder item_finder;
 	SPACE_FIND(d->entt[ARCHETYPE_ITEM].space, o, 16, item_finder, item)
@@ -71,7 +71,7 @@ drawDungeon(struct Dungeon *d, vec16 o)
 		if (bitmapGetPx(ctx.shadow, pos[0] - offset_x, pos[1] - offset_y, 0) ==
 			1) {
 			termMove(&ui, pos[0] - offset_x, pos[1] - offset_y);
-			termPut(&ui, d->entt[ARCHETYPE_ITEM].tile[item].utf);
+			termPut(&ui, d->entt[ARCHETYPE_ITEM].glyph[item]);
 		}
 	}
 
@@ -84,7 +84,7 @@ drawDungeon(struct Dungeon *d, vec16 o)
 		if (bitmapGetPx(ctx.shadow, pos[0] - offset_x, pos[1] - offset_y, 0) ==
 			1) {
 			termMove(&ui, pos[0] - offset_x, pos[1] - offset_y);
-			termPut(&ui, d->entt[ARCHETYPE_MONSTER].tile[monster].utf);
+			termPut(&ui, d->entt[ARCHETYPE_MONSTER].glyph[monster]);
 		}
 	}
 

@@ -29,8 +29,78 @@
 #define DOES_PRINT(c_) ((c_) >= 0x20 && (c_) <= 0x7E)
 // #define DOES_TERMINATE(c_) ((c_) >= 0x40 && (c_) <= 0x7E)
 
+typedef int (*ColorCompareFn)(const Color*, const Color*);
+typedef void (*ColorFgBrushFn)(const Color*);
+typedef void (*ColorBgBrushFn)(const Color*);
+
+static int colorMonoCompare(const Color* a, const Color* b)
+{
+	return a->mono == b->mono;
+}
+
+static void colorMonoFg(const Color *c)
+{
+    printf("\x1b[%sm", c->mono ? "7" : "27");
+    // 1 → "\x1b[7m"   (invert: fg↔bg swap)
+    // 0 → "\x1b[27m"  (normal: reset invert)
+}	
+static void colorMonoBg(const Color *c)
+{
+  (void)(c);
+}
+
+static int colorAnsi16Compare(const Color *a, const Color *b)
+{
+	return a->ansi16 == b->ansi16;
+}
+// ANSI16: direct mapping 30-37 (0-7) + 90-97 (8-15)
+static void colorAnsi16Fg(const Color *c)
+{
+    int code = (c->ansi16 < 8) ? 30 + c->ansi16 : 90 + (c->ansi16 - 8);
+    printf("\x1b[38;%dm", code);
+}
+static void colorAnsi16Bg(const Color *c)
+{
+    int code = (c->ansi16 < 8) ? 30 + c->ansi16 : 90 + (c->ansi16 - 8);
+    printf("\x1b[48;%dm", code);
+}
+
+static int colorAsni256Compare(const Color *a, const Color *b)
+{
+	return a->ansi256 == b->ansi256;
+}
+static void colorAnsi256Fg(const Color *c)
+{
+    printf("\x1b[38;5;%um", c->ansi256);
+}
+static void colorAnsi256Bg(const Color *c)
+{
+    printf("\x1b[48;5;%um", c->ansi256);
+}
+
+static int colorTrueCompare(const Color *a, const Color *b)
+{
+    return (a->rgb.r == b->rgb.r) && 
+           (a->rgb.g == b->rgb.g) && 
+           (a->rgb.b == b->rgb.b);
+}
+static void colorTrueFg(const Color *c)
+{
+    printf("\x1b[38;2;%u;%u;%um", c->rgb.r, c->rgb.g, c->rgb.b);
+}
+static void colorTrueBg(const Color *c)
+{
+    printf("\x1b[48;2;%u;%u;%um", c->rgb.r, c->rgb.g, c->rgb.b);
+}
+
 struct Term {
 	struct termios initial_termios;
+	struct {
+		ColorCompareFn compare;
+		ColorFgBrushFn front;
+		ColorBgBrushFn back;
+	} color;
+	ColorPalette palette;
 	uint16_t width;
 	uint16_t height;
 	int resize;
@@ -44,8 +114,9 @@ static struct Term *TERM;
 struct TermUI
 termRoot(void)
 {
-	return (struct TermUI) {
-		0, 0, TERM->width, TERM->height, 0, 0,
+	return (struct TermUI)
+	{
+		0, 0, TERM->width, TERM->height, 0, 0, COLOR_FG, COLOR_BG
 	};
 }
 
@@ -55,11 +126,8 @@ termWin(struct TermUI cur, int width, int height, int margin_left,
 {
 	return (struct TermUI) {
 		cur.margin_top + margin_top + cur.y,
-		cur.margin_left + margin_left + cur.x,
-		width,
-		height,
-		cur.x,
-		cur.y,
+			cur.margin_left + margin_left + cur.x, width, height, cur.x, cur.y,
+cur.fg, cur.bg			
 	};
 }
 
@@ -92,8 +160,11 @@ termPut(struct TermUI *ui, utf8_ch ch)
 	if (ui->x >= TERM->width)
 		return;
 
-	fbGet(TERM->frame, ui->x + ui->margin_left, ui->y + ui->margin_top)->utf =
-		ch;
+	struct TermTile *tile =
+		fbGet(TERM->frame, ui->x + ui->margin_left, ui->y + ui->margin_top);
+	tile->utf = ch;
+	tile->fg = TERM->palette[ui->fg];
+	tile->bg = TERM->palette[ui->bg];
 	termMove(ui, ui->x + 1, ui->y);
 }
 
@@ -199,20 +270,32 @@ termFlush(void)
 	for (uint16_t y = 0; y < TERM->height; y++) {
 		uint16_t x = 0;
 		bool pen_down = false;
-
+		Color pen_fg = {0};
+		Color pen_bg = {0};
+		
 		while (x < TERM->width) {
 
 			struct TermTile *cur = fbGet(TERM->frame, x, y);
 			struct TermTile *nex = fbGet(NEXT_FRAME, x, y);
-			if (utf8Equal(cur->utf, nex->utf)) {
+			if (utf8Equal(cur->utf, nex->utf) ||
+				TERM->color.compare(&cur->fg, &nex->fg) ||
+				TERM->color.compare(&cur->bg, &nex->bg)) {
 
 				if (!pen_down) {
 					printf(ESCA "%d;%dH", y + 1, x + 1);
 					pen_down = true;
 				}
 
-				utf8_ch ch = fbGet(TERM->frame, x, y)->utf;
-				utf8Put(ch);
+				if (!TERM->color.compare(&pen_fg, &cur->fg)) {
+					TERM->color.front(&cur->fg);
+					pen_fg = cur->fg;
+				}
+				if (!TERM->color.compare(&pen_bg, &cur->bg)) {
+					TERM->color.back(&cur->bg);
+					pen_bg = cur->bg;
+				}
+								
+				utf8Put(cur->utf);
 
 			} else {
 				pen_down = false;
@@ -272,7 +355,14 @@ void
 termInit(void)
 {
 	TERM = malloc(sizeof(struct Term));
+	*TERM = (struct Term){0};
+	
+	TERM->color.compare = colorMonoCompare;
+	TERM->color.front = colorMonoFg;
+	TERM->color.back = colorMonoBg;
 
+	TERM->palette[COLOR_BG].mono = 1;
+	
 	setlocale(LC_ALL, "");
 
 	// disable output buffering, so chars will flush

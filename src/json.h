@@ -3,7 +3,7 @@
 #include "../extern/cJSON.h"
 #include "terminal_types.h"
 
-int readJsonCopyChar(cJSON *, const char *, struct TermTile *, size_t);
+int readJsonCopyChar(cJSON *, const char *, utf8_ch *, size_t);
 int readJsonCopyInt(cJSON *root, const char *key, int *array, size_t index);
 int readJsonCopyUint32(cJSON *root, const char *key, uint32_t *array,
 					   size_t index);

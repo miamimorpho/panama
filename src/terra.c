@@ -13,7 +13,7 @@ struct TerraChunk {
 	Bitmap *solid;
 	Bitmap *opaque;
 	Bitmap *fog;
-	struct TermTile *tile;
+	struct TerraTile *tile;
 };
 
 struct Terrain {
@@ -157,21 +157,25 @@ terraGetFog(struct TerraPos p)
 }
 
 void
-terraPutTile(struct TerraPos p, struct TermTile ch)
+terraPutTile(struct TerraPos p, struct TerraTile t)
 {
 	if (!p.chunk)
 		return;
-	p.chunk->tile[p.pos[1] * CHUNK_LENGTH + p.pos[0]] = ch;
+	p.chunk->tile[p.pos[1] * CHUNK_LENGTH + p.pos[0]] = t;
 }
 
-struct TermTile
+struct TerraTile
 terraGetTile(struct TerraPos p)
 {
-	static struct TermTile tile = {0};
+	struct TerraTile tile = {
+		utf8Decomp("#"),
+		COLOR_FG,
+		COLOR_BG,
+	};
 
 	if (!p.chunk) {
-		tile.utf = utf8Decomp("#");
 		return tile;
 	}
-	return p.chunk->tile[p.pos[1] * CHUNK_LENGTH + p.pos[0]];
+	
+	return p.chunk->tile[p.pos[1] * CHUNK_LENGTH + p.pos[0] ];
 }

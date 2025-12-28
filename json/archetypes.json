@@ -3,7 +3,8 @@
 		"count" : 128,
 		"components" : [ 
 			"name", 
-			"tile",
+			"glyph",
+			"color",
 			"hp",
 
 			"str",
@@ -19,7 +20,8 @@
 		"count" : 256,
 		"components" : [ 
 			"name", 
-			"tile", 
+			"glyph",
+			"color",
 			"hp", 
 
 			"attack",
