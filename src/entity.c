@@ -4,17 +4,17 @@
 #include "terra.h"
 #include "entity.h"
 #include "space.h"
-#include "json.h"
+#include "json_wrapper.h"
 
 static const int ENTT_CHUNK_SIZE = 16;
 
-#define COMPONENT_QUERY_ADD(comp_name, arch, count, comps_json)                \
-	do {                                                                       \
-		if (hasComponent(comps_json, #comp_name)) {                            \
-			arch->comp_name =                                                  \
-				componentMalloc(count, sizeof(arch->comp_name[0]));            \
-		}                                                                      \
-	} while (0)
+#define COMPONENT_QUERY_ADD(comp_name, arch, count, comps_json)			\
+  do {																	\
+	if (jsonArrayHasEntry(comps_json, #comp_name)) {					\
+	  arch->comp_name =													\
+		componentMalloc(count, sizeof(arch->comp_name[0]));				\
+	}																	\
+  } while (0)
 
 static inline size_t
 componentOverflow(size_t nmemb, size_t stride)
@@ -42,42 +42,19 @@ componentMalloc(size_t nmemb, size_t stride)
 	return ptr;
 }
 
-static int
-hasComponent(cJSON *comps_arr, const char *comp_name)
-{
-	if (!cJSON_IsArray(comps_arr))
-		return 0;
-
-	cJSON *item = NULL;
-	cJSON_ArrayForEach(item, comps_arr)
-	{
-		if (cJSON_IsString(item) &&
-			strncmp(item->valuestring, comp_name, strlen(comp_name)) == 0) {
-			return 1;
-		}
-	}
-	return 0;
-}
 
 static int
-archetypeCreateOne(struct Archetype *form, cJSON *entry)
+archetypeCreateOne(struct Archetype *form, json_value *entry)
 {
-	cJSON *count = cJSON_GetObjectItemCaseSensitive(entry, "count");
-	cJSON *comps = cJSON_GetObjectItemCaseSensitive(entry, "components");
-
-	if (!count || !cJSON_IsNumber(count)) {
-		abort();
-	}
-	if (!comps || !cJSON_IsArray(comps)) {
-		abort();
-	}
-
-	int c = count->valueint;
-
+	*form = (struct Archetype){0};
+	
+	int c = *jsonGetInt(entry, "count");
 	form->max = c;
 	form->cur = 0;
 	form->space = spaceCreate(ENTT_CHUNK_SIZE, c);
 
+	json_value *comps = jsonFindField(entry, "components");
+	
 	COMPONENT_QUERY_ADD(name, form, c, comps);
 	COMPONENT_QUERY_ADD(glyph, form, c, comps);
 	COMPONENT_QUERY_ADD(color, form, c, comps);	
@@ -101,18 +78,16 @@ archetypeCreateOne(struct Archetype *form, cJSON *entry)
 static int
 archetypesCreate(struct Dungeon *d)
 {
-	cJSON *root = readJson("archetypes");
-	if (!root)
-		return 1;
+	json_value *root = jsonReadFile("archetypes");
 
-	cJSON *actor = cJSON_GetObjectItemCaseSensitive(root, "actor");
-	archetypeCreateOne(&d->entt[ARCHETYPE_MONSTER], actor);
+	json_value *jactor = jsonFindField(root, "actor");
+	archetypeCreateOne(&d->entt[ARCHETYPE_MONSTER], jactor);
 
-	cJSON *item = cJSON_GetObjectItemCaseSensitive(root, "item");
-	archetypeCreateOne(&d->entt[ARCHETYPE_ITEM], item);
+	json_value *jitem = jsonFindField(root, "item");
+	archetypeCreateOne(&d->entt[ARCHETYPE_ITEM], jitem);	
 
-	cJSON_Delete(root);
-
+	json_value_free(root);
+	
 	return 0;
 }
 
@@ -136,76 +111,95 @@ entityAlloc(struct Archetype *a, HandleID *out)
 }
 
 int
+readJsonCopyChar(json_value *root, const char *key, utf8_ch *array,
+				 size_t index)
+{
+	if (!array)
+		return 0; // Skip if array is NULL
+	if (!root || !key)
+		return 1;
+	const char * str = jsonGetString(root, key);
+
+	array[index] = utf8Decomp(str);
+	return 0;
+}
+
+int
+readJsonCopyInt(json_value *root, const char *key, int *array, size_t index)
+{
+	if (!array) return 0;
+	
+	array[index] = *jsonGetInt(root, key);
+	return 0;
+}
+
+int
+readJsonCopyString(json_value *root, const char *key, char **array, size_t index)
+{
+	if (!array) return 0;
+	const char* str = jsonGetString(root, key);
+
+	size_t len = strlen(str) + 1;
+	assert(!array[index]);
+	array[index] = calloc(len, sizeof(char));
+	assert(array[index] && "memory allocation failed");
+	
+	memcpy(array[index], str, len);
+	return 0;	
+}
+
+int
 entityJson(Entities all_types, const char *filename, Handle *out)
 {
 	HandleID id;
 
-	cJSON *json = readJson(filename);
-	if (!json)
+	json_value *r = jsonReadFile(filename);
+	if (!r)
 		return 1;
 
 	struct Archetype *a = NULL;
 
-	// Archetype
-	cJSON *archetype = cJSON_GetObjectItemCaseSensitive(json, "archetype");
-	if (archetype && cJSON_IsString(archetype)) {
-		if (strncmp(archetype->valuestring, "actor", strlen("actor")) == 0) {
+	const char *jarchetype = jsonGetString(r, "archetype");
+	size_t jlen = strlen(jarchetype);
+	if (jarchetype)
+	{
+		if (strncmp(jarchetype, "actor", jlen) == 0) {
 			out->type = ARCHETYPE_MONSTER;
-		} else if (!strncmp(archetype->valuestring, "item", strlen("item"))) {
-			out->type = ARCHETYPE_ITEM;
+		} else if (strncmp(jarchetype, "item", jlen) == 0){
+			out->type = ARCHETYPE_MONSTER;
 		} else {
 			return 1;
 		}
 		a = &all_types[out->type];
 	} else {
 		return 1;
-	}
+	}	
 
 	entityAlloc(a, &id);
 	out->id = id;
 
 	// MetaData
-	readJsonCopyString(json, "name", a->name, id);
-	readJsonCopyChar(json, "glyph", a->glyph, id);
+	readJsonCopyString(r, "name", a->name, id);
+	readJsonCopyChar(r, "glyph", a->glyph, id);
 	
-	readJsonCopyInt(json, "hp", a->hp, id);
+	readJsonCopyInt(r, "hp", a->hp, id);
 
 	// Actor Stats
-	readJsonCopyUint32(json, "str", a->str, id);
-	readJsonCopyUint32(json, "con", a->con, id);
-	readJsonCopyUint32(json, "per", a->per, id);
-	readJsonCopyUint32(json, "dex", a->dex, id);
-	readJsonCopyUint32(json, "wis", a->wis, id);
+	readJsonCopyInt(r, "str", a->str, id);
+	readJsonCopyInt(r, "con", a->con, id);
+	readJsonCopyInt(r, "per", a->per, id);
+	readJsonCopyInt(r, "dex", a->dex, id);
+	readJsonCopyInt(r, "wis", a->wis, id);
 	
 	// Weapon Stats
-	readJsonCopyUint32(json, "attack", a->attack, id);
-	readJsonCopyUint32(json, "range", a->range, id);
-	readJsonCopyUint32(json, "damage", a->damage, id);
+	readJsonCopyInt(r, "attack", a->attack, id);
+	readJsonCopyInt(r, "range", a->range, id);
+	readJsonCopyInt(r, "damage", a->damage, id);
 
-	// Inventory
-	cJSON *inventory_c = cJSON_GetObjectItemCaseSensitive(json, "inventory");
-	if (cJSON_IsNumber(inventory_c)) {
-		VECTOR_CREATE(&a->inventory[id], inventory_c->valueint);
-	}
+	int inventory_c = *jsonGetInt(r, "inventory");
+	VECTOR_CREATE(&a->inventory[id], inventory_c);
 
-	/*
-	char *defence = NULL;
-	jsonPeakString(json, "defence", &defence);
-	if (defence) {
-		if (strncmp(defence, "fortitude", strlen("fortitude")))
-			a->def_type[han.id] = DEF_FORTITUDE;
-
-		if (strncmp(defence, "will", strlen("will")))
-			a->def_type[han.id] = DEF_WILL;
-
-		if (strncmp(defence, "reflex", strlen("reflex")))
-			a->def_type[han.id] = DEF_REFLEX;
-
-		free(defence);
-	}
-	*/
-
-	cJSON_Delete(json);
+	json_value_free(r);
 	return 0;
 }
 
@@ -252,11 +246,6 @@ entityMove(struct Dungeon *d, Handle in, vec16 delta)
 	if (terraGetSolid(tp))
 		return;
 
-	// HandleID hit;
-	// if (0 == spaceGet(type->space, &hit, delta)) {
-	//		return;
-	// }
-
 	spaceMove(type->space, in.id, delta);
 }
 
@@ -289,8 +278,6 @@ entityAttack(Entities entts, Handle atk, Handle def)
 
 	int atk_score = atk_entt->str[atk.id];
 	def_entt->hp[def.id] -= atk_score;
-	// int fortitude = fmax(def_entt->str[def.id], def_type->con[def.id]);
-	//  todo add AC/weapons
 
 	if (def_entt->hp[def.id] <= 0) {
 

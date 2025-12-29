@@ -29,6 +29,9 @@ enum termInputCodes {
 };
 
 void termInit(void);
+void termClose(void);
+void termErr(const char *);
+
 void termSwap(void);
 void termFlush(void);
 

@@ -87,9 +87,6 @@ utf8Put(utf8_ch ch)
 		write(STDOUT_FILENO, " ", 1);
 		return;
 	}
-
-	// int len = utf8ChSize(ch.bytes);
-
 	write(STDOUT_FILENO, ch.bytes, ch.size);
 }
 

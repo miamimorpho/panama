@@ -1,7 +1,7 @@
 {
 	"archetype": "item",
 	"name": "Sword",
-	"glyph": "!",
+	"glyph": 5,
 	"color": "weapon",
 	"attack": 5,
 	"range": 1,

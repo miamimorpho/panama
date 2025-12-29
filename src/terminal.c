@@ -10,6 +10,7 @@
 #include <locale.h>
 
 #include "terminal.h"
+#include "json_wrapper.h"
 
 #define TERMINAL_DEF_WID 80
 #define TERMINAL_DEF_HEI 24
@@ -32,6 +33,26 @@
 typedef int (*ColorCompareFn)(const Color*, const Color*);
 typedef void (*ColorFgBrushFn)(const Color*);
 typedef void (*ColorBgBrushFn)(const Color*);
+
+const char *g_term_error = {0};
+
+struct Term {
+	struct termios initial_termios;
+	struct {
+		ColorCompareFn compare;
+		ColorFgBrushFn front;
+		ColorBgBrushFn back;
+	} color;
+	ColorPalette palette;
+	uint16_t width;
+	uint16_t height;
+	int resize;
+	int frame;
+	struct TermTile fb[2 * FRAMEBUFFER_SIZE];
+};
+static struct Term *TERM;
+
+#define NEXT_FRAME ((TERM->frame + 1) % 2)
 
 static int colorMonoCompare(const Color* a, const Color* b)
 {
@@ -92,24 +113,6 @@ static void colorTrueBg(const Color *c)
 {
     printf("\x1b[48;2;%u;%u;%um", c->rgb.r, c->rgb.g, c->rgb.b);
 }
-
-struct Term {
-	struct termios initial_termios;
-	struct {
-		ColorCompareFn compare;
-		ColorFgBrushFn front;
-		ColorBgBrushFn back;
-	} color;
-	ColorPalette palette;
-	uint16_t width;
-	uint16_t height;
-	int resize;
-	int frame;
-	struct TermTile fb[2 * FRAMEBUFFER_SIZE];
-};
-static struct Term *TERM;
-
-#define NEXT_FRAME ((TERM->frame + 1) % 2)
 
 struct TermUI
 termRoot(void)
@@ -267,19 +270,22 @@ resize(void)
 void
 termFlush(void)
 {
+	Color pen_fg = {0};
+	TERM->color.front(&pen_fg);
+	Color pen_bg = {1};
+	TERM->color.back(&pen_bg);
+
 	for (uint16_t y = 0; y < TERM->height; y++) {
 		uint16_t x = 0;
 		bool pen_down = false;
-		Color pen_fg = {0};
-		Color pen_bg = {0};
-		
+
 		while (x < TERM->width) {
 
 			struct TermTile *cur = fbGet(TERM->frame, x, y);
 			struct TermTile *nex = fbGet(NEXT_FRAME, x, y);
 			if (utf8Equal(cur->utf, nex->utf) ||
-				TERM->color.compare(&cur->fg, &nex->fg) ||
-				TERM->color.compare(&cur->bg, &nex->bg)) {
+				!TERM->color.compare(&cur->fg, &nex->fg) ||
+				!TERM->color.compare(&cur->bg, &nex->bg)) {
 
 				if (!pen_down) {
 					printf(ESCA "%d;%dH", y + 1, x + 1);
@@ -328,20 +334,34 @@ resizeHandler(int i)
 }
 
 static void
+exitHandler(int i)
+{
+	(void) i;
+	restore();
+
+	if (g_term_error)
+		printf("%s", g_term_error);
+  
+	exit(0);	
+}	
+
+static void
 setup_signals(void)
 {
 	struct sigaction sa;
 
 	// Common handler: exit
 	memset(&sa, 0, sizeof(sa));
-	sa.sa_handler = exit;
+	sa.sa_handler = exitHandler;
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = 0; // no SA_RESTART etc. unless you want it
 
 	sigaction(SIGTERM, &sa, NULL);
 	sigaction(SIGINT, &sa, NULL);
 	sigaction(SIGTRAP, &sa, NULL);
-
+    sigaction(SIGSEGV, &sa, NULL);
+	sigaction(SIGABRT, &sa, NULL);
+	
 	// SIGWINCH handler: resizeHandler
 	memset(&sa, 0, sizeof(sa));
 	sa.sa_handler = resizeHandler;
@@ -350,6 +370,16 @@ setup_signals(void)
 
 	sigaction(SIGWINCH, &sa, NULL);
 }
+
+void
+optionsPalette(const char* filename)
+{
+  	json_value *r = jsonReadFile(filename);
+	if (!r)
+		return;
+
+	json_value_free(r);
+}	
 
 void
 termInit(void)
@@ -382,19 +412,21 @@ termInit(void)
 	tcsetattr(1, TCSANOW, &t);
 
 	// assign handlers for polite exit and resize
-	atexit(restore);
+	//atexit(restore);
 	setup_signals();
-
-	// signal(SIGTERM, exit);
-	// signal(SIGINT, exit);
-	// signal(SIGTRAP, exit);
-	// signal(SIGWINCH, resizeHandler);
 
 	SAY(ESCA ALTBUF HIGH ESCA CLEARTERM ESCA CURSOR LOW);
 
 	resizeHandler(0);
 	resize();
 	TERM->resize = 0;
+}
+
+void
+termClose(void)
+{
+	restore();
+	free(TERM);
 }
 
 void

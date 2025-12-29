@@ -11,36 +11,22 @@
 #include "entity.h"
 #include "terminal_types.h"
 #include "terra.h"
-#include "json.h"
+#include "json_wrapper.h"
 
 int
 dungeonGenerate(struct Dungeon *d, const char *level_file)
 {
-
-	cJSON *json = readJson(level_file);
-	if (!json)
+	json_value *root = jsonReadFile(level_file);
+	if (!root)
 		return 1;
 
-	cJSON *json_wfc = cJSON_GetObjectItemCaseSensitive(json, "wfc");
-	if (!json_wfc || !cJSON_IsString(json_wfc)) {
-		return 1;
-	}
+	const char* filepath_ptr = jsonGetString(root, "wfc");
 
 	char filepath[256];
-	snprintf(filepath, sizeof(filepath), "./wfc/%s", json_wfc->valuestring);
+	snprintf(filepath, sizeof(filepath), "./wfc/%s", filepath_ptr);
 
-	cJSON *json_width = cJSON_GetObjectItemCaseSensitive(json, "width");
-	if (!json_width || !cJSON_IsNumber(json_width)) {
-		return 1;
-	}
-
-	cJSON *json_height = cJSON_GetObjectItemCaseSensitive(json, "height");
-	if (!json_height || !cJSON_IsNumber(json_height)) {
-		return 1;
-	}
-
-	int width = json_width->valueint;
-	int height = json_height->valueint;
+	int width = *jsonGetInt(root, "width");
+	int height = *jsonGetInt(root, "height");
 
 	struct wfc_image *sample = wfc_img_load(filepath);
 	assert(sample && "image does not exist for dungeonGenerate");
