@@ -1,23 +1,19 @@
 * TODO
 
-json
-error logging system
-on exit, tail file
+error logging system -> fatal crashes
+warning logging system -> inform user (json)
+game logging system -> meaningful ingame events
 
-optional color modes
 blood and gore
 
+doors
 sokuban boulders
 
 autotiling
 array of 16 bitmasks
 put bitmask in array, get tile
 
-game logging system
-l key to show/hide log
-
 hud
 box drawing
 
-add debugging to json reading
 more enemies/items...

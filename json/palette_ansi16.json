@@ -1,0 +1,7 @@
+{
+	"color_mode":"ansi16",
+	"bg": 8,
+	"fg": 7,
+	"monster": 7,
+	"item": 7
+}

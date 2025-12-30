@@ -67,7 +67,7 @@ colorMonoJson(json_value *root, const char *key, Color *c)
 {
 	const long long *i = jsonGetInt(root, key);
 	if (i) {
-		c->mono = i ? true : false;
+		c->mono = *i ? true : false;
 	}
 }
 
@@ -94,16 +94,22 @@ static void
 colorAnsi16Json(json_value *root, const char *key, Color *c)
 {
 	const long long *i = jsonGetInt(root, key);
-	if (i || *i < 0 || *i > 16) {
+	if (!i) {
+		fprintf(stderr, "%s color not found!\n", key);
+		c->ansi16 = 0;
+		return;
+	}
+	if(*i >= 0 && *i < 16) {
 		c->ansi16 = *i;
 	} else {
 		fprintf(
-			stderr,
-			"WARN: %s color invalid: values must be 0 <= int < 16 for ansi16\n",
-			key);
-		c->ansi16 = 1;
+				stderr,
+				"WARN: %s color invalid: values must be 0 <= int < 16 for ansi16 (is %d \n",
+				key, (int)*i);
+		c->ansi16 = 0;
 	}
 }
+
 static int
 colorAnsi16Compare(const Color *a, const Color *b)
 {
@@ -114,15 +120,29 @@ static void
 colorAnsi16Fg(const Color *c)
 {
 	int code = (c->ansi16 < 8) ? 30 + c->ansi16 : 90 + (c->ansi16 - 8);
-	printf("\x1b[38;%dm", code);
+	printf("\x1b[%dm", code);
 }
 static void
 colorAnsi16Bg(const Color *c)
 {
-	int code = (c->ansi16 < 8) ? 30 + c->ansi16 : 90 + (c->ansi16 - 8);
-	printf("\x1b[48;%dm", code);
+	int code = (c->ansi16 < 8) ? 40 + c->ansi16 : 100 + (c->ansi16 - 8);
+	printf("\x1b[%dm", code);
 }
 
+static void
+colorAnsi256Json(json_value *root, const char *key, Color *c)
+{
+	const long long *i = jsonGetInt(root, key);
+	if (i || *i < 0 || *i > 256) {
+		c->ansi256 = *i;
+	} else {
+		fprintf(
+			stderr,
+			"WARN: %s color invalid: values must be 0 <= int < 256 for ansi256\n",
+			key);
+		c->ansi256 = 1;
+	}
+}
 static int
 colorAnsi256Compare(const Color *a, const Color *b)
 {
@@ -139,6 +159,20 @@ colorAnsi256Bg(const Color *c)
 	printf("\x1b[48;5;%um", c->ansi256);
 }
 
+static void
+colorTrueJson(json_value *root, const char *key, Color *c)
+{
+	//TODO
+	const char *i = jsonGetString(root, key);
+	if (i) {
+		//c->true = i;
+	} else {
+		fprintf(
+			stderr,
+			"WARN: %s color invalid: values must be \"#rrggbb\"\n", key);
+		//c->true = 1;
+	}
+}
 static int
 colorTrueCompare(const Color *a, const Color *b)
 {
@@ -313,9 +347,9 @@ resize(void)
 void
 termFlush(void)
 {
-	Color pen_fg = {0};
+	Color pen_fg = {1};
 	TERM->color.front(&pen_fg);
-	Color pen_bg = {1};
+	Color pen_bg = {0};
 	TERM->color.back(&pen_bg);
 
 	for (uint16_t y = 0; y < TERM->height; y++) {
@@ -417,10 +451,11 @@ setup_signals(void)
 void
 optionsPalette(json_value *palette, ColorJsonFn reader)
 {
-	reader(palette, "bg", &TERM->palette[COLOR_BG]);
-	reader(palette, "fg", &TERM->palette[COLOR_FG]);
-	reader(palette, "monster", &TERM->palette[COLOR_MONSTER]);
-	reader(palette, "item", &TERM->palette[COLOR_ITEM]);
+	for (int i = 0; i < COLOR_COUNT; i++) {
+		if(colorname[i] != NULL){
+			reader(palette, colorname[i], &TERM->palette[i]);
+		}
+	}
 }
 
 void
@@ -445,21 +480,21 @@ options(void)
 		TERM->color.front = colorMonoFg;
 		TERM->color.back = colorMonoBg;
 		optionsPalette(jpalette, colorMonoJson);
-	} else if (strncmp("ansi16", color_mode, strlen("mono")) == 0) {
+	} else if (strncmp("ansi16", color_mode, strlen("ansi16")) == 0) {
 		TERM->color.compare = colorAnsi16Compare;
 		TERM->color.front = colorAnsi16Fg;
 		TERM->color.back = colorAnsi16Bg;
-		TERM->palette[COLOR_BG].mono = 1;
-	} else if (strncmp("ansi256", color_mode, strlen("mono")) == 0) {
+		optionsPalette(jpalette, colorAnsi16Json);
+	} else if (strncmp("ansi256", color_mode, strlen("ansi256")) == 0) {
 		TERM->color.compare = colorAnsi256Compare;
 		TERM->color.front = colorAnsi256Fg;
 		TERM->color.back = colorAnsi256Bg;
-		TERM->palette[COLOR_BG].mono = 1;
-	} else if (strncmp("true", color_mode, strlen("mono")) == 0) {
+		optionsPalette(jpalette, colorAnsi256Json);
+	} else if (strncmp("true", color_mode, strlen("true")) == 0) {
 		TERM->color.compare = colorTrueCompare;
 		TERM->color.front = colorTrueFg;
 		TERM->color.back = colorTrueBg;
-		TERM->palette[COLOR_BG].mono = 1;
+		optionsPalette(jpalette, colorTrueJson);
 	} else {
 		exit(1);
 	}

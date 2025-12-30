@@ -19,3 +19,6 @@ core.[0-9]*
 *.orig
 
 *.o
+
+#logs
+*.log

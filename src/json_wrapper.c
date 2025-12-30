@@ -35,10 +35,8 @@ jsonGetString(json_value *j, const char *key)
 const long long *
 jsonGetInt(json_value *j, const char *key)
 {
-	static long long ret = 0;
-
 	json_value *elm = jsonFindField(j, key);
-	if (elm && elm->type == json_integer && elm->u.integer) {
+	if (elm && elm->type == json_integer) {
 		return &elm->u.integer;
 	}
 	return NULL;
