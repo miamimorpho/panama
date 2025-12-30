@@ -8,13 +8,13 @@
 
 static const int ENTT_CHUNK_SIZE = 16;
 
-#define COMPONENT_QUERY_ADD(comp_name, arch, count, comps_json)			\
-  do {																	\
-	if (jsonArrayHasEntry(comps_json, #comp_name)) {					\
-	  arch->comp_name =													\
-		componentMalloc(count, sizeof(arch->comp_name[0]));				\
-	}																	\
-  } while (0)
+#define COMPONENT_QUERY_ADD(comp_name, arch, count, comps_json)                \
+	do {                                                                       \
+		if (jsonArrayHasEntry(comps_json, #comp_name)) {                       \
+			arch->comp_name =                                                  \
+				componentMalloc(count, sizeof(arch->comp_name[0]));            \
+		}                                                                      \
+	} while (0)
 
 static inline size_t
 componentOverflow(size_t nmemb, size_t stride)
@@ -42,22 +42,21 @@ componentMalloc(size_t nmemb, size_t stride)
 	return ptr;
 }
 
-
 static int
 archetypeCreateOne(struct Archetype *form, json_value *entry)
 {
-	*form = (struct Archetype){0};
-	
+	*form = (struct Archetype) {0};
+
 	int c = *jsonGetInt(entry, "count");
 	form->max = c;
 	form->cur = 0;
 	form->space = spaceCreate(ENTT_CHUNK_SIZE, c);
 
 	json_value *comps = jsonFindField(entry, "components");
-	
+
 	COMPONENT_QUERY_ADD(name, form, c, comps);
 	COMPONENT_QUERY_ADD(glyph, form, c, comps);
-	COMPONENT_QUERY_ADD(color, form, c, comps);	
+	COMPONENT_QUERY_ADD(color, form, c, comps);
 	COMPONENT_QUERY_ADD(hp, form, c, comps);
 	COMPONENT_QUERY_ADD(str, form, c, comps);
 	COMPONENT_QUERY_ADD(con, form, c, comps);
@@ -84,10 +83,10 @@ archetypesCreate(struct Dungeon *d)
 	archetypeCreateOne(&d->entt[ARCHETYPE_MONSTER], jactor);
 
 	json_value *jitem = jsonFindField(root, "item");
-	archetypeCreateOne(&d->entt[ARCHETYPE_ITEM], jitem);	
+	archetypeCreateOne(&d->entt[ARCHETYPE_ITEM], jitem);
 
 	json_value_free(root);
-	
+
 	return 0;
 }
 
@@ -111,41 +110,15 @@ entityAlloc(struct Archetype *a, HandleID *out)
 }
 
 int
-readJsonCopyChar(json_value *root, const char *key, utf8_ch *array,
-				 size_t index)
-{
-	if (!array)
-		return 0; // Skip if array is NULL
-	if (!root || !key)
-		return 1;
-	const char * str = jsonGetString(root, key);
-
-	array[index] = utf8Decomp(str);
-	return 0;
-}
-
-int
 readJsonCopyInt(json_value *root, const char *key, int *array, size_t index)
 {
-	if (!array) return 0;
-	
-	array[index] = *jsonGetInt(root, key);
+	if (!array)
+		return 0;
+	const long long *p = jsonGetInt(root, key);
+	if (!p)
+		return 1;
+	array[index] = *p;
 	return 0;
-}
-
-int
-readJsonCopyString(json_value *root, const char *key, char **array, size_t index)
-{
-	if (!array) return 0;
-	const char* str = jsonGetString(root, key);
-
-	size_t len = strlen(str) + 1;
-	assert(!array[index]);
-	array[index] = calloc(len, sizeof(char));
-	assert(array[index] && "memory allocation failed");
-	
-	memcpy(array[index], str, len);
-	return 0;	
 }
 
 int
@@ -161,28 +134,83 @@ entityJson(Entities all_types, const char *filename, Handle *out)
 
 	const char *jarchetype = jsonGetString(r, "archetype");
 	size_t jlen = strlen(jarchetype);
-	if (jarchetype)
-	{
+	if (jarchetype) {
 		if (strncmp(jarchetype, "actor", jlen) == 0) {
 			out->type = ARCHETYPE_MONSTER;
-		} else if (strncmp(jarchetype, "item", jlen) == 0){
-			out->type = ARCHETYPE_MONSTER;
+		} else if (strncmp(jarchetype, "item", jlen) == 0) {
+			out->type = ARCHETYPE_ITEM;
 		} else {
 			return 1;
 		}
 		a = &all_types[out->type];
 	} else {
 		return 1;
-	}	
+	}
 
 	entityAlloc(a, &id);
 	out->id = id;
 
-	// MetaData
-	readJsonCopyString(r, "name", a->name, id);
-	readJsonCopyChar(r, "glyph", a->glyph, id);
-	
-	readJsonCopyInt(r, "hp", a->hp, id);
+	if (a->name) {
+		const char *name = jsonGetString(r, "name");
+		if (name) {
+			a->name[id] = strdup(name);
+		} else {
+			fprintf(stderr,
+					"WARN: loading %s file \"%s\"... missing name field, using "
+					"filename\n",
+					jarchetype, filename);
+			a->name[id] = strdup(filename);
+		}
+	}
+
+	if (a->glyph) {
+		const char *glyph = jsonGetString(r, "glyph");
+		if (glyph) {
+			a->glyph[id] = utf8Decomp(glyph);
+		} else {
+			fprintf(
+				stderr,
+				"WARN: loading %s file \"%s\" ... missing glyph, using '?'\n",
+				jarchetype, filename);
+			a->glyph[id] = utf8Decomp("?");
+		}
+	}
+
+	if (a->color) {
+		const char *color = jsonGetString(r, "color");
+		bool found = false;
+		if (color) {
+
+			for (int i = 0; i < COLOR_COUNT; i++) {
+				int colnmlen = strlen(colorname[i]);
+				if (strncmp(color, colorname[i], colnmlen) == 0 &&
+					color[colnmlen] == '\0') {
+					a->color[id] = i;
+					found = true;
+					break;
+				}
+			}
+		}
+		if (!found) {
+			fprintf(stderr,
+					"WARN: loading %s file \"%s\" ... invalid color, using "
+					"default\n",
+					jarchetype, filename);
+			a->color[id] = COLOR_BG;
+		}
+	}
+
+	if (a->hp) {
+		const long long *hp = jsonGetInt(r, "hp");
+		if (hp) {
+			a->hp[id] = *hp;
+		} else {
+			fprintf(stderr,
+					"WARN: loading %s file \"%s\" ... missing hp, using 1\n",
+					jarchetype, filename);
+			a->hp[id] = 1;
+		}
+	}
 
 	// Actor Stats
 	readJsonCopyInt(r, "str", a->str, id);
@@ -190,14 +218,16 @@ entityJson(Entities all_types, const char *filename, Handle *out)
 	readJsonCopyInt(r, "per", a->per, id);
 	readJsonCopyInt(r, "dex", a->dex, id);
 	readJsonCopyInt(r, "wis", a->wis, id);
-	
+
 	// Weapon Stats
 	readJsonCopyInt(r, "attack", a->attack, id);
 	readJsonCopyInt(r, "range", a->range, id);
 	readJsonCopyInt(r, "damage", a->damage, id);
 
-	int inventory_c = *jsonGetInt(r, "inventory");
-	VECTOR_CREATE(&a->inventory[id], inventory_c);
+	const long long *inventory_c = jsonGetInt(r, "inventory");
+	if (a->inventory && inventory_c) {
+		VECTOR_CREATE(&a->inventory[id], *inventory_c);
+	}
 
 	json_value_free(r);
 	return 0;

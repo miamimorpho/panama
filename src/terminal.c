@@ -30,9 +30,17 @@
 #define DOES_PRINT(c_) ((c_) >= 0x20 && (c_) <= 0x7E)
 // #define DOES_TERMINATE(c_) ((c_) >= 0x40 && (c_) <= 0x7E)
 
-typedef int (*ColorCompareFn)(const Color*, const Color*);
-typedef void (*ColorFgBrushFn)(const Color*);
-typedef void (*ColorBgBrushFn)(const Color*);
+const char *colorname[COLOR_COUNT] = {
+	[COLOR_BG] = "bg",
+	[COLOR_FG] = "fg",
+	[COLOR_MONSTER] = "monster",
+	[COLOR_ITEM] = "item",
+};
+
+typedef void (*ColorJsonFn)(json_value *, const char *, Color *);
+typedef int (*ColorCompareFn)(const Color *, const Color *);
+typedef void (*ColorFgBrushFn)(const Color *);
+typedef void (*ColorBgBrushFn)(const Color *);
 
 const char *g_term_error = {0};
 
@@ -54,84 +62,119 @@ static struct Term *TERM;
 
 #define NEXT_FRAME ((TERM->frame + 1) % 2)
 
-static int colorMonoCompare(const Color* a, const Color* b)
+static void
+colorMonoJson(json_value *root, const char *key, Color *c)
+{
+	const long long *i = jsonGetInt(root, key);
+	if (i) {
+		c->mono = i ? true : false;
+	}
+}
+
+static int
+colorMonoCompare(const Color *a, const Color *b)
 {
 	return a->mono == b->mono;
 }
 
-static void colorMonoFg(const Color *c)
+static void
+colorMonoFg(const Color *c)
 {
-    printf("\x1b[%sm", c->mono ? "7" : "27");
-    // 1 → "\x1b[7m"   (invert: fg↔bg swap)
-    // 0 → "\x1b[27m"  (normal: reset invert)
-}	
-static void colorMonoBg(const Color *c)
+	printf("\x1b[%sm", c->mono ? "7" : "27");
+	// 1 → "\x1b[7m"   (invert: fg↔bg swap)
+	// 0 → "\x1b[27m"  (normal: reset invert)
+}
+static void
+colorMonoBg(const Color *c)
 {
-  (void)(c);
+	(void) (c);
 }
 
-static int colorAnsi16Compare(const Color *a, const Color *b)
+static void
+colorAnsi16Json(json_value *root, const char *key, Color *c)
+{
+	const long long *i = jsonGetInt(root, key);
+	if (i || *i < 0 || *i > 16) {
+		c->ansi16 = *i;
+	} else {
+		fprintf(
+			stderr,
+			"WARN: %s color invalid: values must be 0 <= int < 16 for ansi16\n",
+			key);
+		c->ansi16 = 1;
+	}
+}
+static int
+colorAnsi16Compare(const Color *a, const Color *b)
 {
 	return a->ansi16 == b->ansi16;
 }
 // ANSI16: direct mapping 30-37 (0-7) + 90-97 (8-15)
-static void colorAnsi16Fg(const Color *c)
+static void
+colorAnsi16Fg(const Color *c)
 {
-    int code = (c->ansi16 < 8) ? 30 + c->ansi16 : 90 + (c->ansi16 - 8);
-    printf("\x1b[38;%dm", code);
+	int code = (c->ansi16 < 8) ? 30 + c->ansi16 : 90 + (c->ansi16 - 8);
+	printf("\x1b[38;%dm", code);
 }
-static void colorAnsi16Bg(const Color *c)
+static void
+colorAnsi16Bg(const Color *c)
 {
-    int code = (c->ansi16 < 8) ? 30 + c->ansi16 : 90 + (c->ansi16 - 8);
-    printf("\x1b[48;%dm", code);
+	int code = (c->ansi16 < 8) ? 30 + c->ansi16 : 90 + (c->ansi16 - 8);
+	printf("\x1b[48;%dm", code);
 }
 
-static int colorAsni256Compare(const Color *a, const Color *b)
+static int
+colorAnsi256Compare(const Color *a, const Color *b)
 {
 	return a->ansi256 == b->ansi256;
 }
-static void colorAnsi256Fg(const Color *c)
+static void
+colorAnsi256Fg(const Color *c)
 {
-    printf("\x1b[38;5;%um", c->ansi256);
+	printf("\x1b[38;5;%um", c->ansi256);
 }
-static void colorAnsi256Bg(const Color *c)
+static void
+colorAnsi256Bg(const Color *c)
 {
-    printf("\x1b[48;5;%um", c->ansi256);
+	printf("\x1b[48;5;%um", c->ansi256);
 }
 
-static int colorTrueCompare(const Color *a, const Color *b)
+static int
+colorTrueCompare(const Color *a, const Color *b)
 {
-    return (a->rgb.r == b->rgb.r) && 
-           (a->rgb.g == b->rgb.g) && 
-           (a->rgb.b == b->rgb.b);
+	return (a->rgb.r == b->rgb.r) && (a->rgb.g == b->rgb.g) &&
+		   (a->rgb.b == b->rgb.b);
 }
-static void colorTrueFg(const Color *c)
+static void
+colorTrueFg(const Color *c)
 {
-    printf("\x1b[38;2;%u;%u;%um", c->rgb.r, c->rgb.g, c->rgb.b);
+	printf("\x1b[38;2;%u;%u;%um", c->rgb.r, c->rgb.g, c->rgb.b);
 }
-static void colorTrueBg(const Color *c)
+static void
+colorTrueBg(const Color *c)
 {
-    printf("\x1b[48;2;%u;%u;%um", c->rgb.r, c->rgb.g, c->rgb.b);
+	printf("\x1b[48;2;%u;%u;%um", c->rgb.r, c->rgb.g, c->rgb.b);
 }
 
 struct TermUI
 termRoot(void)
 {
-	return (struct TermUI)
-	{
-		0, 0, TERM->width, TERM->height, 0, 0, COLOR_FG, COLOR_BG
-	};
+	return (struct TermUI) {0, 0, TERM->width, TERM->height,
+							0, 0, COLOR_BG,	   COLOR_FG};
 }
 
 struct TermUI
 termWin(struct TermUI cur, int width, int height, int margin_left,
 		int margin_top)
 {
-	return (struct TermUI) {
-		cur.margin_top + margin_top + cur.y,
-			cur.margin_left + margin_left + cur.x, width, height, cur.x, cur.y,
-cur.fg, cur.bg			
-	};
+	return (struct TermUI) {cur.margin_top + margin_top + cur.y,
+							cur.margin_left + margin_left + cur.x,
+							width,
+							height,
+							cur.x,
+							cur.y,
+							cur.fg,
+							cur.bg};
 }
 
 static inline struct TermTile *
@@ -300,7 +343,7 @@ termFlush(void)
 					TERM->color.back(&cur->bg);
 					pen_bg = cur->bg;
 				}
-								
+
 				utf8Put(cur->utf);
 
 			} else {
@@ -341,9 +384,9 @@ exitHandler(int i)
 
 	if (g_term_error)
 		printf("%s", g_term_error);
-  
-	exit(0);	
-}	
+
+	exit(0);
+}
 
 static void
 setup_signals(void)
@@ -359,9 +402,9 @@ setup_signals(void)
 	sigaction(SIGTERM, &sa, NULL);
 	sigaction(SIGINT, &sa, NULL);
 	sigaction(SIGTRAP, &sa, NULL);
-    sigaction(SIGSEGV, &sa, NULL);
+	sigaction(SIGSEGV, &sa, NULL);
 	sigaction(SIGABRT, &sa, NULL);
-	
+
 	// SIGWINCH handler: resizeHandler
 	memset(&sa, 0, sizeof(sa));
 	sa.sa_handler = resizeHandler;
@@ -372,27 +415,67 @@ setup_signals(void)
 }
 
 void
-optionsPalette(const char* filename)
+optionsPalette(json_value *palette, ColorJsonFn reader)
 {
-  	json_value *r = jsonReadFile(filename);
+	reader(palette, "bg", &TERM->palette[COLOR_BG]);
+	reader(palette, "fg", &TERM->palette[COLOR_FG]);
+	reader(palette, "monster", &TERM->palette[COLOR_MONSTER]);
+	reader(palette, "item", &TERM->palette[COLOR_ITEM]);
+}
+
+void
+options(void)
+{
+	json_value *r = jsonReadFile("options/init");
 	if (!r)
 		return;
 
+	const char *jpalettename = jsonGetString(r, "palette");
+	json_value *jpalette = jsonReadFile(jpalettename);
+	if (!jpalette) {
+		fprintf(stderr, "FATAL: terminal.c:options() -> palette file listed in "
+						"options/init.json not found\n");
+		json_value_free(r);
+		exit(1);
+	}
+
+	const char *color_mode = jsonGetString(jpalette, "color_mode");
+	if (strncmp("mono", color_mode, strlen("mono")) == 0) {
+		TERM->color.compare = colorMonoCompare;
+		TERM->color.front = colorMonoFg;
+		TERM->color.back = colorMonoBg;
+		optionsPalette(jpalette, colorMonoJson);
+	} else if (strncmp("ansi16", color_mode, strlen("mono")) == 0) {
+		TERM->color.compare = colorAnsi16Compare;
+		TERM->color.front = colorAnsi16Fg;
+		TERM->color.back = colorAnsi16Bg;
+		TERM->palette[COLOR_BG].mono = 1;
+	} else if (strncmp("ansi256", color_mode, strlen("mono")) == 0) {
+		TERM->color.compare = colorAnsi256Compare;
+		TERM->color.front = colorAnsi256Fg;
+		TERM->color.back = colorAnsi256Bg;
+		TERM->palette[COLOR_BG].mono = 1;
+	} else if (strncmp("true", color_mode, strlen("mono")) == 0) {
+		TERM->color.compare = colorTrueCompare;
+		TERM->color.front = colorTrueFg;
+		TERM->color.back = colorTrueBg;
+		TERM->palette[COLOR_BG].mono = 1;
+	} else {
+		exit(1);
+	}
+
+	json_value_free(jpalette);
 	json_value_free(r);
-}	
+}
 
 void
 termInit(void)
 {
 	TERM = malloc(sizeof(struct Term));
-	*TERM = (struct Term){0};
-	
-	TERM->color.compare = colorMonoCompare;
-	TERM->color.front = colorMonoFg;
-	TERM->color.back = colorMonoBg;
+	*TERM = (struct Term) {0};
 
-	TERM->palette[COLOR_BG].mono = 1;
-	
+	options();
+
 	setlocale(LC_ALL, "");
 
 	// disable output buffering, so chars will flush
@@ -412,7 +495,7 @@ termInit(void)
 	tcsetattr(1, TCSANOW, &t);
 
 	// assign handlers for polite exit and resize
-	//atexit(restore);
+	// atexit(restore);
 	setup_signals();
 
 	SAY(ESCA ALTBUF HIGH ESCA CLEARTERM ESCA CURSOR LOW);

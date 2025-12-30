@@ -2,7 +2,7 @@
 	"archetype": "item",
 	"name": "Sword",
 	"glyph": 5,
-	"color": "weapon",
+	"color": "item",
 	"attack": 5,
 	"range": 1,
 	"damage": 4

@@ -1,0 +1,21 @@
+# Core dumps
+*.core
+core
+core.[0-9]*
+
+# Backup files (Vim, Emacs, etc.)
+*~
+*.swp
+*.swo
+.#*
+.*.swp
+.*.swo
+
+# Emacs autosave
+.#*
+
+# Patch backup files
+*.rej
+*.orig
+
+*.o

@@ -6,7 +6,7 @@ struct Terrain;
 struct TerraTile {
 	utf8_ch utf;
 	enum ColorSym fg;
-	enum ColorSym bg;	
+	enum ColorSym bg;
 };
 
 struct TerraPos {
@@ -26,4 +26,3 @@ bool terraGetFog(struct TerraPos);
 
 void terraPutTile(struct TerraPos, struct TerraTile);
 struct TerraTile terraGetTile(struct TerraPos);
-

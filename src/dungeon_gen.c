@@ -20,7 +20,7 @@ dungeonGenerate(struct Dungeon *d, const char *level_file)
 	if (!root)
 		return 1;
 
-	const char* filepath_ptr = jsonGetString(root, "wfc");
+	const char *filepath_ptr = jsonGetString(root, "wfc");
 
 	char filepath[256];
 	snprintf(filepath, sizeof(filepath), "./wfc/%s", filepath_ptr);
@@ -39,13 +39,13 @@ dungeonGenerate(struct Dungeon *d, const char *level_file)
 		COLOR_FG,
 		COLOR_BG,
 	};
-	
+
 	struct TerraTile wall = {
 		utf8Code32(0x2593),
 		COLOR_FG,
 		COLOR_BG,
 	};
-	
+
 	for (int y = 0; y < output->height; y++) {
 		for (int x = 0; x < output->width; x++) {
 			size_t i = (y * output->width + x) * output->component_cnt;

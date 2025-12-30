@@ -176,6 +176,6 @@ terraGetTile(struct TerraPos p)
 	if (!p.chunk) {
 		return tile;
 	}
-	
-	return p.chunk->tile[p.pos[1] * CHUNK_LENGTH + p.pos[0] ];
+
+	return p.chunk->tile[p.pos[1] * CHUNK_LENGTH + p.pos[0]];
 }

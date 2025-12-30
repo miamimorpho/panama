@@ -19,7 +19,7 @@ struct Archetype {
 	char **name;
 	utf8_ch *glyph;
 	enum ColorSym *color;
-		
+
 	// Location
 	struct Space *space;
 	struct Inventory *inventory; // if entity stores items, this is an array of

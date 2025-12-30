@@ -10,8 +10,8 @@ struct TermUI {
 	int32_t height;
 	int32_t x;
 	int32_t y;
+	enum ColorSym bg;
 	enum ColorSym fg;
-	enum ColorSym bg;	
 };
 
 enum termInputCodes {

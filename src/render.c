@@ -59,8 +59,8 @@ drawDungeon(struct Dungeon *d, vec16 o)
 		}
 	}
 
-	ui.fg = COLOR_BG;
-	
+	// ui.fg = COLOR_BG;
+
 	HandleID item;
 	struct SpaceFinder item_finder;
 	SPACE_FIND(d->entt[ARCHETYPE_ITEM].space, o, 16, item_finder, item)
@@ -71,7 +71,9 @@ drawDungeon(struct Dungeon *d, vec16 o)
 		if (bitmapGetPx(ctx.shadow, pos[0] - offset_x, pos[1] - offset_y, 0) ==
 			1) {
 			termMove(&ui, pos[0] - offset_x, pos[1] - offset_y);
+			ui.fg = d->entt[ARCHETYPE_ITEM].color[item];
 			termPut(&ui, d->entt[ARCHETYPE_ITEM].glyph[item]);
+			ui.fg = 0;
 		}
 	}
 
@@ -84,7 +86,10 @@ drawDungeon(struct Dungeon *d, vec16 o)
 		if (bitmapGetPx(ctx.shadow, pos[0] - offset_x, pos[1] - offset_y, 0) ==
 			1) {
 			termMove(&ui, pos[0] - offset_x, pos[1] - offset_y);
+			ui.fg = d->entt[ARCHETYPE_MONSTER].color[monster];
+			// ui.bg = d->entt[ARCHETYPE_MONSTER].color[monster];
 			termPut(&ui, d->entt[ARCHETYPE_MONSTER].glyph[monster]);
+			ui.fg = 0;
 		}
 	}
 

@@ -1,6 +1,8 @@
 * TODO
 
+json
 error logging system
+on exit, tail file
 
 optional color modes
 blood and gore
