@@ -397,7 +397,7 @@ termFlush(void)
 static void
 restore(void)
 {
-	SAY(ESCA CLEARTERM ESCA CURSOR HIGH ESCA ALTBUF LOW);
+	SAY(ESCA CLEARTERM ESCA CURSOR HIGH ESCA ALTBUF LOW "\x1b[0m");
 
 	// restore original termios params
 	tcsetattr(1, TCSANOW, &TERM->initial_termios);
